@@ -32,8 +32,8 @@ void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, uint8_t serialC
 		GCLK->CLKCTRL.reg = clk_ctrl;
 }
 
-void SPI_commonInit(Sercom* sercom, bool isMaster, uint8_t transfer_mode){
-	sercom->SPI.CTRLA.bit.MODE = isMaster? SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val : SERCOM_SPI_CTRLA_MODE_SPI_SLAVE_Val;
+void SPI_commonInit(Sercom* sercom, bool isHost, uint8_t transfer_mode){
+	sercom->SPI.CTRLA.bit.MODE = isHost? SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val : SERCOM_SPI_CTRLA_MODE_SPI_SLAVE_Val;
 	sercom->SPI.CTRLA.bit.DOPO = 0;  //PAD[0] Data out, PAD[1] SCK, PAD[2] SS
 	sercom->SPI.CTRLA.bit.DIPO = 3;  //PAD[3] Data in
 	sercom->SPI.CTRLA.bit.DORD = 0; // MSB first
@@ -47,7 +47,7 @@ void SPI_commonInit(Sercom* sercom, bool isMaster, uint8_t transfer_mode){
 // baud: value calculated via f_ref/(2*f_baud) - 1, where f_ref is speed of serial clock (GCLK_SERCOM0_CORE) and f_baud is desired baud rate
 // AKA f_baud = f_ref /(2*(baud+1))
 // f_baud must be <= 0.5*f_ref
-void SPI_InitMaster(Sercom* sercom, uint8_t transfer_mode, uint8_t baud, bool hardwareSS){
+void SPI_InitHost(Sercom* sercom, uint8_t transfer_mode, uint8_t baud, bool hardwareSS){
 	SPI_SetEnabled(sercom, false);			// disable SERCOMx so configuration is possible
 
 	SPI_commonInit(sercom, true, transfer_mode);
@@ -60,7 +60,7 @@ void SPI_InitMaster(Sercom* sercom, uint8_t transfer_mode, uint8_t baud, bool ha
 }
 
 // if address mode is -1, address matching will be turned off
-void SPI_InitSlave(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, uint8_t address, uint8_t addressMask){
+void SPI_InitClient(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, uint8_t address, uint8_t addressMask){
 	SPI_SetEnabled(sercom, false);			// disable SERCOMx so configuration is possible
 
 	SPI_commonInit(sercom, false, transfer_mode);
@@ -74,6 +74,7 @@ void SPI_InitSlave(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, ui
 		sercom->SPI.ADDR.reg = SERCOM_SPI_ADDR_ADDRMASK(addressMask) | SERCOM_SPI_ADDR_ADDR(address);
 	}
 	sercom->SPI.CTRLB.bit.SSDE = 1;
+	sercom->SPI.CTRLB.bit.PLOADEN = 1;
 
 	sercom->SPI.CTRLB.bit.RXEN = 1;			// enable receiver
 	SPI_SetEnabled(sercom, true);			// enable peripheral
@@ -91,37 +92,34 @@ void SPI_SetEnabled(Sercom* sercom, bool setEnabled){
 	while(sercom->SPI.SYNCBUSY.bit.ENABLE);
 }
 
-
-//TODO: client preloading?
+/* recall that for SPI, each byte of data sent will result in one byte being received */
 void SPI_SendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
 	for(int i = 0; i < len; i++){
 		//wait for tx buffer to empty
 		while(spi->SPI.INTFLAG.bit.DRE == 0); //TODO: WDT
 		//load DR with next byte
-		spi->SPI.DATA.reg = txBuffer[i];
-		
+		if(txBuffer) {
+			spi->SPI.DATA.reg = txBuffer[i];
+		}
+		else {
+			//write a zero
+			spi->SPI.DATA.reg = 0;	// TODO: configurable dummy byte?
+		}
+			
 		//wait for transmit complete
-		while(spi->SPI.INTFLAG.bit.TXC == 0); 
+		while(spi->SPI.INTFLAG.bit.TXC == 0);
 
-		// wait for rx buffer to be full
-		while(spi->SPI.INTFLAG.bit.RXC == 0);
-		//read data 
-		rxBuffer[i] = spi->SPI.DATA.reg;
+		if(rxBuffer){ // don't read if rxBuffer is null
+			// wait for byte received
+			while(spi->SPI.INTFLAG.bit.RXC == 0);
+			//read data
+			rxBuffer[i] = spi->SPI.DATA.reg;
+		}
 	}
-	// wait for transmit to complete
-	while(spi->SPI.INTFLAG.bit.TXC == 0); 
 }
 
-uint32_t SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t toRead){
-	uint32_t bytesRead = 0;
-	// transmission is not complete
-	while(spi->SPI.INTFLAG.bit.TXC == 0 && bytesRead < toRead){
-		// wait for rx buffer to be full
-		while(spi->SPI.INTFLAG.bit.RXC == 0);
-		
-		rxBuffer[bytesRead] = spi->SPI.DATA.reg;
-		++bytesRead;
-	}
-	
-	return bytesRead;
+/* because of this, to read data as host, we must send data. Client can simply read, but there is no harm in sending data as well. */
+void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len){
+	SPI_SendData(spi, NULL, rxBuffer, len); // no txbuffer because we are not sending "real" data
 }
+
