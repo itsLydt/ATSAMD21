@@ -8,7 +8,7 @@
 #include "spi.h"
 #define SPI_BUFFER_LEN UINT8_MAX
 struct SPI_BUFFERS {
-	bool isBusy;
+	volatile bool isBusy;
 	volatile uint8_t tx_index;
 	volatile uint8_t rx_index;
 	volatile uint8_t dataLen;
@@ -124,29 +124,35 @@ void SPI_SendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len)
 			//write a zero
 			spi->SPI.DATA.reg = 0;	// TODO: configurable dummy byte?
 		}
-			
-		//wait for transmit complete
-		while(spi->SPI.INTFLAG.bit.TXC == 0);
-
+		
+		// wait for byte received
+		while(spi->SPI.INTFLAG.bit.RXC == 0);
+	
 		if(rxBuffer){ // don't read if rxBuffer is null
-			// wait for byte received
-			while(spi->SPI.INTFLAG.bit.RXC == 0);
 			//read data
 			rxBuffer[i] = spi->SPI.DATA.reg;
 		}
+		else {
+			uint8_t dummyByte = spi->SPI.DATA.reg; // needed to clear RXC flag
+		}
+		
+		//wait for transmit complete
+		while(spi->SPI.INTFLAG.bit.TXC == 0);
 	}
+	
+	spi->SPI.INTFLAG.bit.TXC = 0;	// clear the flag manually
 }
 
 /* because of this, to read data as host, we must send data. Client can simply read, but there is no harm in sending data as well. */
 void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len){
-	SPI_SendData(spi, NULL, rxBuffer, len); // no txbuffer because we are not sending "real" data
+	SPI_SendData(spi, 0, rxBuffer, len); // no txbuffer because we are not sending "real" data
 }
 
 bool SPI_IsBusy(){
 	return SPI_DATA.isBusy;
 }
 /* Nonblocking calls for transmit and receive */
-void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
+void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
 	while(SPI_DATA.isBusy); //wait until previous transaction finished
 	
 	SPI_DATA.isBusy = true;
