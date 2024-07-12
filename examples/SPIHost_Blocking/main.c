@@ -81,7 +81,7 @@ void EIC_Handler(){ //triggered on EXTINT[15] falling edge
 	// get length of return message
 	SPI_ReceiveData(SERCOM0, &len, 1);
 	// get the response
-	char response[len];
+	char response[UINT8_MAX];
 	SPI_ReceiveData(SERCOM0, &response, len);
 	
 	GPIO_WritePin(GPIOB, LED0, true);
