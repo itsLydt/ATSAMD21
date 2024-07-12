@@ -203,13 +203,12 @@ void SPI_InterruptHandler(Sercom* spi){
 	}
 	
 	if(spi->SPI.INTFLAG.bit.RXC){
+		SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg; //reading DATA clears RXC flag
 		if(SPI_DATA.rx_index >= SPI_DATA.dataLen){
 			// sent all data
 			SPI_SetRXCIntEnabled(spi, false);
 			SPI_DATA.isBusy = false;
-			return;
 		}
-		SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg; //reading DATA clears RXC flag
 		return;
 	}
 }
