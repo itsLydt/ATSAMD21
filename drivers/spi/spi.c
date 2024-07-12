@@ -6,6 +6,15 @@
  */ 
 
 #include "spi.h"
+#define SPI_BUFFER_LEN UINT8_MAX
+struct SPI_BUFFERS {
+	bool isBusy;
+	uint8_t tx_index;
+	uint8_t rx_index;
+	uint8_t dataLen;
+	char txBuffer[SPI_BUFFER_LEN];
+	char rxBuffer[SPI_BUFFER_LEN];
+} SPI_DATA;
 
 /*
 SERCOM number: 0-5
@@ -33,6 +42,10 @@ void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, uint8_t serialC
 }
 
 void SPI_commonInit(Sercom* sercom, bool isHost, uint8_t transfer_mode){
+	SPI_DATA.isBusy = false;
+	SPI_DATA.dataLen = 0;
+	SPI_DATA.index = 0;
+	
 	sercom->SPI.CTRLA.bit.MODE = isHost? SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val : SERCOM_SPI_CTRLA_MODE_SPI_SLAVE_Val;
 	sercom->SPI.CTRLA.bit.DOPO = 0;  //PAD[0] Data out, PAD[1] SCK, PAD[2] SS
 	sercom->SPI.CTRLA.bit.DIPO = 3;  //PAD[3] Data in
@@ -84,6 +97,11 @@ void SPI_InitClient(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, u
 
 void SPI_Reset(Sercom* sercom){
 	sercom->SPI.CTRLA.bit.SWRST = 1; // resets all registers of the sercom peripheral and disables it
+	SPI_DATA.isBusy = false;
+	SPI_DATA.txLen = 0;
+	SPI_DATA.rxLen = 0;
+	SPI_DATA.index = 0;
+		
 	while(sercom->SPI.SYNCBUSY.bit.SWRST);
 }
 
@@ -123,3 +141,74 @@ void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len){
 	SPI_SendData(spi, NULL, rxBuffer, len); // no txbuffer because we are not sending "real" data
 }
 
+/* Nonblocking calls for transmit and receive */
+void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
+	while(SPI_DATA.isBusy); //wait until previous transaction finished
+	
+	SPI_DATA.isBusy = true;
+	memcpy(SPI_DATA.txBuffer, txBuffer, len); // copy data into txBuffer
+	SPI_DATA.index = 0;
+	SPI_DATA.dataLen = len;
+	
+	// enable interrupt routines to handle data transfer
+	SPI_SetDREIntEnabled(spi, true);
+	SPI_SetRXCIntEnabled(spi, true);
+}
+void SPI_BeginReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
+
+void SPI_SetTXCIntEnabled(Sercom* spi, bool setEnabled){
+	if(setEnabled)
+		spi->SPI.INTENSET.bit.TXC = 1;
+	else
+		spi->SPI.INTENCLR.bit.TXC = 1;
+}
+void SPI_SetRXCIntEnabled(Sercom* spi, bool setEnabled){
+	if(setEnabled)
+	spi->SPI.INTENSET.bit.RXC = 1;
+	else
+	spi->SPI.INTENCLR.bit.RXC = 1;
+}
+
+void SPI_SetDREIntEnabled(Sercom* spi, bool setEnabled){
+	if(setEnabled)
+		spi->SPI.INTENSET.bit.DRE = 1;
+	else
+		spi->SPI.INTENCLR.bit.DRE = 1;
+}
+void SPI_SetSSLIntEnabled(Sercom* spi, bool setEnabled){
+	if(setEnabled)
+		spi->SPI.INTENSET.bit.SSL = 1;
+	else
+		spi->SPI.INTENCLR.bit.SSL = 1;
+}
+void SPI_SetErrIntEnabled(Sercom* spi, bool setEnabled){
+	if(setEnabled)
+		spi->SPI.INTENSET.bit.ERROR = 1;
+	else
+		spi->SPI.INTENCLR.bit.ERROR = 1;
+}
+
+void SPI_InterruptHandler(Sercom* spi)){
+
+	// determine which interrupt occurred
+	if(spi->SPI.INTFLAG.bit.DRE){ // ready to send next byte
+		if(SPI_DATA.tx_index >= SPI_DATA.dataLen){
+			SPI_SetDREIntEnabled(spi, false);
+			return;
+		}
+		spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index++]; // writing to DATA clears TXC flag
+		return;
+	}
+	
+	
+	if(spi->SPI.INTFLAG.bit.RXC){
+		if(SPI_DATA.rx_index >= SPI_DATA.dataLen){
+			// sent all data
+			SPI_SetRXCIntEnabled(spi, false);
+			SPI_DATA.isBusy = false;
+			return;
+		}
+		SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg; //reading DATA clears RXC flag
+		return;
+	}
+}

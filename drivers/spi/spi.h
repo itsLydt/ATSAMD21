@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "sam.h"
 
@@ -26,11 +27,19 @@ void SPI_SetEnabled(Sercom* sercom, bool setEnabled);
 
 /* Blocking calls for transmit and receive */
 void SPI_SendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len);
-void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t toRead);
+void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
 
-void SPI_ConfigureInterupt();
-void SPI_EnableInterrupt();
-void SPI_DisableInterrupt();
+/* Nonblocking calls for transmit and receive */
+void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len);
+void SPI_BeginReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
+
+void SPI_SetTXCIntEnabled(Sercom* spi, bool setEnabled);
+void SPI_SetRXCIntEnabled(Sercom* spi, bool setEnabled);
+void SPI_SetDREIntEnabled(Sercom* spi, bool setEnabled);
+void SPI_SetSSLIntEnabled(Sercom* spi, bool setEnabled);
+void SPI_SetErrIntEnabled(Sercom* spi, bool setEnabled);
+
+void SPI_InterruptHandler(Sercom* spi);
 
 //void SPI_LockConfiguration();
 
