@@ -159,7 +159,12 @@ void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
 	while(SPI_DATA.isBusy); //wait until previous transaction finished
 	
 	SPI_DATA.isBusy = true;
-	memcpy(SPI_DATA.txBuffer, txBuffer, len); // copy data into txBuffer
+	if(txBuffer){
+		memcpy(SPI_DATA.txBuffer, txBuffer, len); // copy data into txBuffer
+	}
+	else {
+		memset(SPI_DATA.txBuffer, 0, len);
+	}
 	SPI_DATA.tx_index = 0;
 	SPI_DATA.rx_index = 0;
 	SPI_DATA.dataLen = len;
@@ -168,7 +173,19 @@ void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
 	SPI_SetDREIntEnabled(spi, true);
 	
 }
-void SPI_BeginReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
+void SPI_BeginReceiveData(Sercom* spi, size_t len){
+	SPI_BeginSendData(spi, 0, len);
+}
+
+size_t SPI_FinishReceiveData(Sercom* spi, uint8_t* rxBuffer){
+	while (SPI_IsBusy());
+	if(rxBuffer){
+		memcpy(rxBuffer, SPI_DATA.rxBuffer, SPI_DATA.dataLen);
+		return SPI_DATA.dataLen;
+	}
+	return 0;
+}
+
 
 void SPI_SetTXCIntEnabled(Sercom* spi, bool setEnabled){
 	if(setEnabled)
