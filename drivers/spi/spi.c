@@ -155,8 +155,8 @@ bool SPI_IsBusy(){
 	return SPI_DATA.isBusy;
 }
 /* Nonblocking calls for transmit and receive */
-void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
-	while(SPI_DATA.isBusy); //wait until previous transaction finished
+bool SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
+	if(SPI_IsBusy()) return false;
 	
 	SPI_DATA.isBusy = true;
 	if(txBuffer){
@@ -171,19 +171,26 @@ void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, size_t len){
 	
 	// enable interrupt routine to handle data transfer
 	SPI_SetDREIntEnabled(spi, true);
+	return true;
 	
 }
-void SPI_BeginReceiveData(Sercom* spi, size_t len){
-	SPI_BeginSendData(spi, 0, len);
+bool SPI_BeginReceiveData(Sercom* spi, size_t len){
+	return SPI_BeginSendData(spi, 0, len);
 }
 
 size_t SPI_FinishReceiveData(Sercom* spi, uint8_t* rxBuffer){
-	while (SPI_IsBusy());
-	if(rxBuffer){
-		memcpy(rxBuffer, SPI_DATA.rxBuffer, SPI_DATA.dataLen);
-		return SPI_DATA.dataLen;
+	size_t bytesRead = 0;
+	if(!rxBuffer)
+		return bytesRead;
+		
+	if(SPI_IsBusy()){
+		bytesRead = SPI_DATA.rx_index;
 	}
-	return 0;
+	else {
+		bytesRead = SPI_DATA.dataLen;
+	}
+	memcpy(rxBuffer, SPI_DATA.rxBuffer, bytesRead);
+	return bytesRead;
 }
 
 

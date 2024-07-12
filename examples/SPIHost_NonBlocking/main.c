@@ -73,9 +73,11 @@ int main(void)
 
 		// get length of return message
 		SPI_BeginReceiveData(SERCOM0, 1);
+		while(SPI_IsBusy());
 		SPI_FinishReceiveData(SERCOM0, &len);
 		// get the response
 		SPI_BeginReceiveData(SERCOM0, len);
+		while(SPI_IsBusy());
 		SPI_FinishReceiveData(SERCOM0, &response);
 	
 		GPIO_WritePin(GPIOB, LED0, true);

@@ -39,15 +39,19 @@ int main(void)
 		// first byte of each transmission string is the length
 		uint8_t len;
 		SPI_BeginReceiveData(SERCOM0, 1);
+		while(SPI_IsBusy());
 		SPI_FinishReceiveData(SERCOM0, &len);
 		// receive len bytes
 		SPI_BeginReceiveData(SERCOM0, len);
+		while(SPI_IsBusy());
 		SPI_FinishReceiveData(SERCOM0, rxBuffer);
+		
 		GPIO_TogglePin(GPIOB, LED0);
 				
 		char* msg = "Nah I don't think I will. HELLO WORLD!";
 		len = strlen(msg);
 		SPI_BeginSendData(SERCOM0, &len, 1);
+		while(SPI_IsBusy());
 		SPI_BeginSendData(SERCOM0, msg, len);
 		while(SPI_IsBusy());
 				
