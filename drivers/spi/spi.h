@@ -15,7 +15,7 @@
 
 #include "sam.h"
 
-void SPI_ClkControl(uint8_t sercom_num, bool setClocksEnabled, uint8_t clkGenerator);
+void SPI_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, uint8_t clkGenerator);
 
 void SPI_InitMaster(Sercom* sercom, uint8_t transfer_mode, uint8_t baud, bool hardwareSS);
 void SPI_InitSlave(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, uint8_t address, uint8_t addressMask);
