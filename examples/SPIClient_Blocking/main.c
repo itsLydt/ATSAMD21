@@ -30,16 +30,24 @@ int main(void)
 	GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD3, false, true, true, 2); // MOSI
 
 	SPI_ClkControl(0, true, -1);
-	SPI_InitSlave(SERCOM0, 0, -1, 0, 0);
+	SPI_InitClient(SERCOM0, 0, -1, 0, 0);
 	
 	char rxBuffer[BUFFER_SIZE];
 
 	while (1) 
     {
-		int received = SPI_ReceiveData(SERCOM0, rxBuffer, BUFFER_SIZE);
-		if(received > 0){
-			GPIO_TogglePin(GPIOB, LED0);
-		}
+		// first byte of each transmission string is the length
+		uint8_t len;
+		SPI_ReceiveData(SERCOM0, &len, 1);
+		// receive len bytes
+		SPI_ReceiveData(SERCOM0, rxBuffer, len);
+		GPIO_TogglePin(GPIOB, LED0);
+		
+		char* msg = "Nah I don't think I will. HELLO WORLD!";
+		len = strlen(msg);
+		SPI_SendData(SERCOM0, &len, 0, 1);
+		SPI_SendData(SERCOM0, msg, 0, len);
+		
 		memset(rxBuffer, 0, BUFFER_SIZE);
     }
 }

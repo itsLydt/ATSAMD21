@@ -49,7 +49,7 @@ int main(void)
 	// enable GEN1
 	GCLK->GENCTRL.reg = GCLK_GENCTRL_GENEN | GCLK_GENCTRL_SRC_OSC8M | GCLK_GENCTRL_ID(1);
 	SPI_ClkControl(0, true, 1);
-	SPI_InitMaster(SERCOM0, 0, 0, true);
+	SPI_InitHost(SERCOM0, 0, 0, true);
 	
     while (1);
 }
@@ -72,7 +72,16 @@ void EIC_Handler(){ //triggered on EXTINT[15] falling edge
 
 	// send msg
 	SPI_SendData(SERCOM0, msg, &rxBuffer, strlen(msg));
+	
+	// wait 
 	for(int i = 0; i < delay; i++);
+
+	// get length of return message
+	SPI_ReceiveData(SERCOM0, &len, 1);
+	// get the response
+	char response[len];
+	SPI_ReceiveData(SERCOM0, &response, len);
+	
 	GPIO_WritePin(GPIOB, LED0, true);
 
 	// re-enable
