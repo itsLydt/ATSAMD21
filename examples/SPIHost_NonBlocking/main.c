@@ -54,6 +54,7 @@ int main(void)
 	
 	char* msg = "Have you considered writing something interesting instead of the boilerplate text everyone uses for everything";
 	uint32_t delay = 10000;
+	char response[UINT8_MAX];
     while (1){
 		while(!flag);			// wait for button click to occur
 
@@ -71,10 +72,11 @@ int main(void)
 		for(int i = 0; i < delay; i++); //wait for client to be ready
 
 		// get length of return message
-		SPI_ReceiveData(SERCOM0, &len, 1);
+		SPI_BeginReceiveData(SERCOM0, 1);
+		SPI_FinishReceiveData(SERCOM0, &len);
 		// get the response
-		char response[len];
-		SPI_ReceiveData(SERCOM0, &response, len);
+		SPI_BeginReceiveData(SERCOM0, len);
+		SPI_FinishReceiveData(SERCOM0, &response);
 	
 		GPIO_WritePin(GPIOB, LED0, true);
 		flag = false;
