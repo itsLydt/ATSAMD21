@@ -19,6 +19,7 @@
 #define SERCOM0_PAD2 10	//PA10, SPI SS
 #define SERCOM0_PAD3 11	//PA11, SPI MISO
 
+bool flag = false;
 int main(void)
 {
 	/* Configure the user LED */
@@ -51,7 +52,33 @@ int main(void)
 	// to use the non-blocking calls, make sure to configure the NVIC
 	NVIC_EnableIRQ(SERCOM0_IRQn);
 	
-    while (1);
+	char* msg = "Have you considered writing something interesting instead of the boilerplate text everyone uses for everything";
+	uint32_t delay = 10000;
+    while (1){
+		while(!flag);			// wait for button click to occur
+
+		GPIO_WritePin(GPIOB, LED0, false);
+	
+		// send length of packet so client knows how much to read
+		uint8_t len = strlen(msg);
+		SPI_BeginSendData(SERCOM0, &len, 1);
+		while(SPI_IsBusy());
+		// send msg
+		SPI_BeginSendData(SERCOM0, msg, strlen(msg));
+		while(SPI_IsBusy());
+		
+		// wait
+		for(int i = 0; i < delay; i++); //wait for client to be ready
+
+		// get length of return message
+		SPI_ReceiveData(SERCOM0, &len, 1);
+		// get the response
+		char response[len];
+		SPI_ReceiveData(SERCOM0, &response, len);
+	
+		GPIO_WritePin(GPIOB, LED0, true);
+		flag = false;
+	}
 }
 
 
@@ -60,39 +87,12 @@ void SERCOM0_Handler(){
 }
 
 void EIC_Handler(){ //triggered on EXTINT[15] falling edge
-
 	//temporarily disable the interrupt
 	GPIO_DisableExtInt(15);
 	// clear the interrupt
 	EIC->INTFLAG.reg = EIC_INTENSET_EXTINT15;
-
-	//char* msg = "Have you considered writing something interesting instead of the boilerplate text everyone uses for everything";
-	char* msg = "Sandwich";
-	uint32_t delay = 50000;
-
-	GPIO_WritePin(GPIOB, LED0, false);
+	flag = true;
 	
-	// send length of packet so client knows how much to read
-	uint8_t len = strlen(msg);
-	SPI_SendData(SERCOM0, &len, 0, 1);
-
-	char rx[256];
-	// send msg
-	SPI_BeginSendData(SERCOM0, msg, rx, strlen(msg));
-	
-	/*
-	
-	// wait
-	for(int i = 0; i < delay; i++);
-
-	// get length of return message
-	SPI_ReceiveData(SERCOM0, &len, 1);
-	// get the response
-	char response[len];
-	SPI_ReceiveData(SERCOM0, &response, len);
-	
-	GPIO_WritePin(GPIOB, LED0, true);
-	*/
 	// re-enable
 	GPIO_EnableExtInt(15);
 }
