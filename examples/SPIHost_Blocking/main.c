@@ -25,20 +25,21 @@ char rxBuffer[BUFFER_SIZE];
 
 int main(void)
 {
+	/* Configure the user LED */
 	GPIO_ConfigurePinAsOutput(GPIOB, LED0, false, false, -1);
 	GPIO_WritePin(GPIOB, LED0, true);
 	
 	/* configure SPI pins */
-	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD0, false, false, 2); // AF mode C MOSI
+	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD0, false, false, 2); // AF mode C, MOSI
 	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD1, false, false, 2); // SCK
 	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD2, false, false, 2); // SS
 	GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD3, false, false, false, 2); //MISO
 
 	/* configure the EIC clocks */
 	// CLK_EIC_APB - on by default
-	GCLK->GENDIV.reg = GCLK_GENDIV_DIV(16) | GCLK_GENDIV_ID(1);
-	// enable GCLK_EIC
+	// enable GCLK_EIC, set to generic clock generator 0
 	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_EIC;
+	
 	// configure button (SW0) as an input, select AF function A (EXTINT[15])
 	GPIO_ConfigurePinAsInput(GPIOA, BUTTON0, false, true, true, 0);
 		
@@ -46,7 +47,8 @@ int main(void)
 	GPIO_ConfigureExtInt(15, true, false, 2);
 	GPIO_EnableExtInt(15);
 	
-	// enable GEN1
+	/* enable generic clock generator 1 to use for SPI clock */
+	GCLK->GENDIV.reg = GCLK_GENDIV_DIV(16) | GCLK_GENDIV_ID(1); // set divider of GEN1 to 16
 	GCLK->GENCTRL.reg = GCLK_GENCTRL_GENEN | GCLK_GENCTRL_SRC_OSC8M | GCLK_GENCTRL_ID(1);
 	SPI_ClkControl(0, true, 1);
 	SPI_InitHost(SERCOM0, 0, 0, true);
