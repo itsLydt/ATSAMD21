@@ -17,7 +17,7 @@
 #define SERCOM0_PAD2 10	//PA10, SPI SS
 #define SERCOM0_PAD3 11	//PA11, SPI MOSI
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE UINT8_MAX
 int main(void)
 {
 	GPIO_ConfigurePinAsOutput(GPIOB, LED0, false, false, -1);
