@@ -113,39 +113,42 @@ void SPI_SetEnabled(Sercom* sercom, bool setEnabled){
 
 /* recall that for SPI, each byte of data sent will result in one byte being received */
 void SPI_SendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
-	for(int i = 0; i < len; i++){
+	while(SPI_DATA.isBusy); //wait until previous transaction finished
+	SPI_DATA.isBusy = true;
+	
+	SPI_DATA.dataLen = len;
+	if(txBuffer){
+		memcpy(SPI_DATA.txBuffer, txBuffer, len);
+	}
+	else {
+		memset(SPI_DATA.txBuffer, 0, len);
+	}
+	
+	for(SPI_DATA.tx_index = SPI_DATA.rx_index = 0; SPI_DATA.tx_index < SPI_DATA.dataLen; SPI_DATA.tx_index++){
 		//wait for tx buffer to empty
 		while(spi->SPI.INTFLAG.bit.DRE == 0); //TODO: WDT
 		//load DR with next byte
-		if(txBuffer) {
-			spi->SPI.DATA.reg = txBuffer[i];
-		}
-		else {
-			//write a zero
-			spi->SPI.DATA.reg = 0;	// TODO: configurable dummy byte?
-		}
-		
+		spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index];
+
 		// wait for byte received
 		while(spi->SPI.INTFLAG.bit.RXC == 0);
-	
-		if(rxBuffer){ // don't read if rxBuffer is null
-			//read data
-			rxBuffer[i] = spi->SPI.DATA.reg;
-		}
-		else {
-			uint8_t dummyByte = spi->SPI.DATA.reg; // needed to clear RXC flag
-		}
 		
+		SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg;
+
 		//wait for transmit complete
 		while(spi->SPI.INTFLAG.bit.TXC == 0);
 	}
 	
 	spi->SPI.INTFLAG.bit.TXC = 0;	// clear the flag manually
+	if(rxBuffer){ 
+		memcpy(rxBuffer, SPI_DATA.rxBuffer, len); //copy read data out
+	}
+	SPI_DATA.isBusy = false;
 }
 
 /* because of this, to read data as host, we must send data. Client can simply read, but there is no harm in sending data as well. */
 void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len){
-	SPI_SendData(spi, 0, rxBuffer, len); // no txbuffer because we are not sending "real" data
+	SPI_SendData(spi, 0, rxBuffer, len); // no tx buffer because we are not sending "real" data
 }
 
 bool SPI_IsBusy(){
