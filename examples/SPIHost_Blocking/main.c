@@ -65,9 +65,12 @@ void EIC_Handler(){ //triggered on EXTINT[15] falling edge
 	uint32_t delay = 50000;
 
 	GPIO_WritePin(GPIOB, LED0, false);
+	
+	// send length of packet so client knows how much to read
 	uint8_t len = strlen(msg);
 	SPI_SendData(SERCOM0, &len, &rxBuffer, 1);
 
+	// send msg
 	SPI_SendData(SERCOM0, msg, &rxBuffer, strlen(msg));
 	for(int i = 0; i < delay; i++);
 	GPIO_WritePin(GPIOB, LED0, true);
