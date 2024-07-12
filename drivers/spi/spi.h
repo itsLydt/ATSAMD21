@@ -30,6 +30,7 @@ void SPI_SendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len)
 void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
 
 /* Nonblocking calls for transmit and receive */
+bool SPI_IsBusy();
 void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len);
 void SPI_BeginReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
 

@@ -9,9 +9,9 @@
 #define SPI_BUFFER_LEN UINT8_MAX
 struct SPI_BUFFERS {
 	bool isBusy;
-	uint8_t tx_index;
-	uint8_t rx_index;
-	uint8_t dataLen;
+	volatile uint8_t tx_index;
+	volatile uint8_t rx_index;
+	volatile uint8_t dataLen;
 	char txBuffer[SPI_BUFFER_LEN];
 	char rxBuffer[SPI_BUFFER_LEN];
 } SPI_DATA;
@@ -142,6 +142,9 @@ void SPI_ReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len){
 	SPI_SendData(spi, NULL, rxBuffer, len); // no txbuffer because we are not sending "real" data
 }
 
+bool SPI_IsBusy(){
+	return SPI_DATA.isBusy;
+}
 /* Nonblocking calls for transmit and receive */
 void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
 	while(SPI_DATA.isBusy); //wait until previous transaction finished
@@ -152,9 +155,9 @@ void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t
 	SPI_DATA.rx_index = 0;
 	SPI_DATA.dataLen = len;
 	
-	// enable interrupt routines to handle data transfer
+	// enable interrupt routine to handle data transfer
 	SPI_SetDREIntEnabled(spi, true);
-	SPI_SetRXCIntEnabled(spi, true);
+	
 }
 void SPI_BeginReceiveData(Sercom* spi, uint8_t* rxBuffer, size_t len);
 
@@ -193,22 +196,33 @@ void SPI_SetErrIntEnabled(Sercom* spi, bool setEnabled){
 void SPI_InterruptHandler(Sercom* spi){
 
 	// determine which interrupt occurred
-	if(spi->SPI.INTFLAG.bit.DRE){ // ready to send next byte
-		if(SPI_DATA.tx_index >= SPI_DATA.dataLen){
-			SPI_SetDREIntEnabled(spi, false);
-			return;
-		}
-		spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index++]; // writing to DATA clears TXC flag
+	uint8_t interruptFlags = spi->SPI.INTFLAG.reg;
+	
+	//  start of transmission
+	if(interruptFlags & SERCOM_SPI_INTFLAG_DRE && SPI_DATA.tx_index == 0){
+		SPI_SetDREIntEnabled(spi, false);		
+		SPI_SetRXCIntEnabled(spi, true);
+		SPI_SetTXCIntEnabled(spi, true);
+		spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index++]; // writing to DATA clears TXC and DRE flag
 		return;
 	}
 	
-	if(spi->SPI.INTFLAG.bit.RXC){
-		SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg; //reading DATA clears RXC flag
-		if(SPI_DATA.rx_index >= SPI_DATA.dataLen){
-			// sent all data
+	//if there is something to read then read it
+	if(interruptFlags & SERCOM_SPI_INTFLAG_RXC){
+		if(SPI_DATA.rx_index < SPI_DATA.dataLen){
+			SPI_DATA.rxBuffer[SPI_DATA.rx_index++] = spi->SPI.DATA.reg; //reading DATA clears RXC flag
+		}
+	}
+	if(interruptFlags & SERCOM_SPI_INTFLAG_TXC){ // ready to send next byte
+		if(SPI_DATA.tx_index < SPI_DATA.dataLen){
+			spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index++]; // writing to DATA clears TXC flag
+		}
+		else {
+			/* end of transmission */
+			spi->SPI.INTFLAG.bit.TXC = 0;	// clear the flag manually
+			SPI_SetTXCIntEnabled(spi, false);
 			SPI_SetRXCIntEnabled(spi, false);
 			SPI_DATA.isBusy = false;
 		}
-		return;
 	}
 }
