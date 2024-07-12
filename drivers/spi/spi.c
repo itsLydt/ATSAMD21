@@ -44,7 +44,8 @@ void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, uint8_t serialC
 void SPI_commonInit(Sercom* sercom, bool isHost, uint8_t transfer_mode){
 	SPI_DATA.isBusy = false;
 	SPI_DATA.dataLen = 0;
-	SPI_DATA.index = 0;
+	SPI_DATA.tx_index = 0;
+	SPI_DATA.rx_index = 0;
 	
 	sercom->SPI.CTRLA.bit.MODE = isHost? SERCOM_SPI_CTRLA_MODE_SPI_MASTER_Val : SERCOM_SPI_CTRLA_MODE_SPI_SLAVE_Val;
 	sercom->SPI.CTRLA.bit.DOPO = 0;  //PAD[0] Data out, PAD[1] SCK, PAD[2] SS
@@ -98,9 +99,9 @@ void SPI_InitClient(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, u
 void SPI_Reset(Sercom* sercom){
 	sercom->SPI.CTRLA.bit.SWRST = 1; // resets all registers of the sercom peripheral and disables it
 	SPI_DATA.isBusy = false;
-	SPI_DATA.txLen = 0;
-	SPI_DATA.rxLen = 0;
-	SPI_DATA.index = 0;
+	SPI_DATA.dataLen = 0;
+	SPI_DATA.tx_index = 0;
+	SPI_DATA.rx_index = 0;
 		
 	while(sercom->SPI.SYNCBUSY.bit.SWRST);
 }
@@ -147,7 +148,8 @@ void SPI_BeginSendData(Sercom* spi, uint8_t* txBuffer, uint8_t* rxBuffer, size_t
 	
 	SPI_DATA.isBusy = true;
 	memcpy(SPI_DATA.txBuffer, txBuffer, len); // copy data into txBuffer
-	SPI_DATA.index = 0;
+	SPI_DATA.tx_index = 0;
+	SPI_DATA.rx_index = 0;
 	SPI_DATA.dataLen = len;
 	
 	// enable interrupt routines to handle data transfer
@@ -188,7 +190,7 @@ void SPI_SetErrIntEnabled(Sercom* spi, bool setEnabled){
 		spi->SPI.INTENCLR.bit.ERROR = 1;
 }
 
-void SPI_InterruptHandler(Sercom* spi)){
+void SPI_InterruptHandler(Sercom* spi){
 
 	// determine which interrupt occurred
 	if(spi->SPI.INTFLAG.bit.DRE){ // ready to send next byte
@@ -199,7 +201,6 @@ void SPI_InterruptHandler(Sercom* spi)){
 		spi->SPI.DATA.reg = SPI_DATA.txBuffer[SPI_DATA.tx_index++]; // writing to DATA clears TXC flag
 		return;
 	}
-	
 	
 	if(spi->SPI.INTFLAG.bit.RXC){
 		if(SPI_DATA.rx_index >= SPI_DATA.dataLen){
