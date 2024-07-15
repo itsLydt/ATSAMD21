@@ -13,6 +13,8 @@ slowClkGenerator: 0-7 or -1: indicates which clock generator will supply the clo
  */
 void I2C_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, int8_t coreClkGenerator, int8_t slowClkGenerator);
 void I2C_Init();
-void IC2_Reset();
+
+void I2C_Reset(Sercom* sercom);
+void I2C_SetEnabled(Sercom* sercom, bool setEnabled);
 
 #endif

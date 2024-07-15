@@ -19,3 +19,13 @@ void I2C_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, int8_t coreClkGen
 		GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID_SERCOMX_SLOW;
 	}
 }
+
+void I2C_Reset(Sercom* sercom){
+	sercom->I2CM.CTRLA.bit.SWRST = 1; // resets all registers of the sercom peripheral and disables it
+	while(sercom->SPI.SYNCBUSY.bit.SWRST);
+}
+
+void I2C_SetEnabled(Sercom* sercom, bool setEnabled){
+	sercom->I2CM.CTRLA.bit.ENABLE = setEnabled? 1 : 0;
+	while(sercom->SPI.SYNCBUSY.bit.ENABLE);
+}
