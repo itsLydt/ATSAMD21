@@ -22,7 +22,7 @@ setClocksEnabled: true to enable, false to disable
 clkGenerator: select clock generator, 0-8
 Note that clock generator must be configured separately
 */
-void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, uint8_t serialClkGenerator){
+void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, int8_t serialClkGenerator){
 	// enable/disable APBC bus clock and peripheral clock for specified SERCOM instance
 	
 	uint32_t bus_mask = (0x01 << (2 + sercom_num)); // SERCOM0: bit2, SERCOM1: bit3, etc

@@ -16,7 +16,13 @@
 
 #include "sam.h"
 
-void SPI_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, uint8_t clkGenerator);
+/* enables/configures the clocks used by the SPI peripheral
+sercom_num: 0-5; indicates which sercom instance is to be used
+setBusClkEnabled: enables or disables the SERCOMx bus clock (CLK_SERCOMx_APB)
+coreClkGenerator: 0-7 or -1: indicates which clock generator will supply the clock signal for the core clock (GCLK_SERCOMx_CORE)
+			set to -1 to disable this clock
+ */
+void SPI_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, int8_t clkGenerator);
 
 void SPI_InitHost(Sercom* sercom, uint8_t transfer_mode, uint8_t baud, bool hardwareSS);
 void SPI_InitClient(Sercom* sercom, uint8_t transfer_mode, int8_t addressMode, uint8_t address, uint8_t addressMask);
