@@ -18,15 +18,15 @@ struct SPI_BUFFERS {
 
 /*
 SERCOM number: 0-5
-setClocksEnabled: true to enable, false to disable
-clkGenerator: select clock generator, 0-8
+setBusClockEnabled: true to enable, false to disable
+serialClkGenerator: select clock generator, 0-7 or -1 to disable
 Note that clock generator must be configured separately
 */
 void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, int8_t serialClkGenerator){
 	// enable/disable APBC bus clock and peripheral clock for specified SERCOM instance
 	
 	uint32_t bus_mask = (0x01 << (2 + sercom_num)); // SERCOM0: bit2, SERCOM1: bit3, etc
-	uint32_t clk_ctrl = GCLK_CLKCTRL_GEN(serialClkGenerator) | GCLK_CLKCTRL_ID(0x14 + sercom_num); // SERCOM0: ID=14, SERCOM1: ID:15, etc
+	uint32_t clk_ctrl = GCLK_CLKCTRL_ID(0x14 + sercom_num); // SERCOM0: ID=14, SERCOM1: ID:15, etc
 
 	if(setBusClockEnabled){
 		PM->APBCMASK.reg |= bus_mask;
@@ -36,7 +36,7 @@ void SPI_ClkControl(uint8_t sercom_num, bool setBusClockEnabled, int8_t serialCl
 	}
 	
 	if(serialClkGenerator != -1)
-		GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | clk_ctrl;
+		GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN(serialClkGenerator) | clk_ctrl;
 	else 
 		GCLK->CLKCTRL.reg = clk_ctrl;
 }
