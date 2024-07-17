@@ -63,7 +63,13 @@ void I2C_InitHost(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t 
 
 void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, bool auto_addr_ack, bool enable_sm);
 
-
+/* Calculate the baud settings required to achieve the specified SCL frequency given the serial clock core clock frequency, if possible 
+	gclk_freq: frequency of the serial engine clock generator (GCLK_SERCOMx_CORE), in kHz
+	target_sclk_freq: target SCLK frequency/I2C bit rate, in kHz
+	baud: pointer to variable where baud setting will be stored
+	baudlow pointer to variable where baudlow setting will be stored
+*/
+_Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* baud, uint8_t* baudlow);
 void I2C_Reset(Sercom* sercom);
 void I2C_SetEnabled(Sercom* sercom, bool setEnabled);
 

@@ -86,6 +86,70 @@ void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_
 	I2C_SetEnabled(sercom, true);
 }
 
+_Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* baud, uint8_t* baudlow){	
+	/* calculations assume worst possible allowable rise time according to I2C specification
+	SM: 1000 ns
+	FM: 300 ns
+	FM+: 120 ns
+	HS: 80ns
+	*/	
+	
+	/* ratio of core clock to target bit rate */
+	uint16_t clk_ratio = gclk_freq / target_sclk_freq;
+		
+	uint16_t min_clk_ratio;
+	uint8_t rise_mod;
+	uint16_t b;
+	if(target_sclk_freq <= 100){
+		// standard mode
+		rise_mod = gclk_freq / 1000; // f_CLK (kHz) * 1000 (ns) / 1 x 10^6 -> f_CLK / 1000
+		min_clk_ratio = 10 + 2 + rise_mod;
+		b = clk_ratio - 10 - rise_mod; // >= 2
+	}
+	else if(target_sclk_freq <= 400){
+		// fast mode
+		rise_mod = (gclk_freq * 3) / 10000; // f_CLK (kHz) * 300 (ns) / 1 x 10^6 ->  3*f_CLK/10000
+		min_clk_ratio = 10 + 2 + rise_mod;
+		b = clk_ratio - 10 - rise_mod; // >= 2
+	}
+	else if(target_sclk_freq <= 1000){
+		// fast-mode+
+		rise_mod = (gclk_freq * 3) / 25000;	// f_CLK (kHz) * 120 (ns) / 1 x 10^6 ->  3*f_CLK/25000
+		min_clk_ratio = 10 + 3 + rise_mod;
+		b = clk_ratio - 10 - rise_mod; // >= 3
+	}
+	else if( target_sclk_freq <= 3400){
+		// high speed mode
+		rise_mod = 0;
+		min_clk_ratio = 2 + 3;
+		b = clk_ratio - 2; // >= 3
+	}
+	else {
+		// error: 3.4MHz is the maximum supported speed
+		*baud = 0;
+		*baudlow = 0;
+		return false;
+	}
+
+	if(clk_ratio < min_clk_ratio){
+		// error: sercom core clk must be at least (ratio) times faster than the desired bit rate
+		*baud = 0;
+		*baudlow = 0;
+		return false;
+	}
+	
+	if(target_sclk_freq <= 400){
+		// SM or FM: T_low and T_high can be even
+		*baud = *baudlow = b/2;
+	}
+	else {
+		// FM+ or HS: T_low must be twice as long as T_high
+		*baud = b / 3;
+		*baudlow = *baud * 2;
+	}
+
+	return true;
+}
 
 void I2C_Reset(Sercom* sercom){
 	sercom->I2CM.CTRLA.bit.SWRST = 1; // resets all registers of the sercom peripheral and disables it
