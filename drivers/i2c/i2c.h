@@ -3,16 +3,66 @@
 
 #include "sam.h"
 
+#include <stdbool.h>
+
 /* enables/configures the clocks used by the I2C peripheral
 sercom_num: 0-5; indicates which sercom instance is to be used. Note that not all sercom pins can be used as I2C pins
-setBusClkEnabled: enables or disables the SERCOMx bus clock (CLK_SERCOMx_APB)
-coreClkGenerator: 0-7 or -1: indicates which clock generator will supply the clock signal for the core clock (GCLK_SERCOMx_CORE)
+en_busClk: enables or disables the SERCOMx bus clock (CLK_SERCOMx_APB)
+coreClkGen: 0-7 or -1: indicates which clock generator will supply the clock signal for the core clock (GCLK_SERCOMx_CORE)
 			set to -1 to disable this clock
-slowClkGenerator: 0-7 or -1: indicates which clock generator will supply the clock signal for the slow clock (GCLK_SERCOM_SLOW)
+slowClkGen: 0-7 or -1: indicates which clock generator will supply the clock signal for the slow clock (GCLK_SERCOM_SLOW)
 			set to -1 to disable this clock
  */
-void I2C_ClkControl(uint8_t sercom_num, bool setBusClkEnabled, int8_t coreClkGenerator, int8_t slowClkGenerator);
-void I2C_Init();
+void I2C_ClkControl(uint8_t sercom_num, bool en_busClk, int8_t coreClkGen, int8_t slowClkGen);
+
+/* Timeout configuration:
+LOWTOUTEN: Enable SCL Low Time-Out
+	if enabled, the host/client will release its clock hold, if enabled, 
+	and complete the current transaction if SCL is held low for 25ms-35ms
+INACTOUT: Inactive Time-Out (host only)
+	if enabled, bus state will be returned to idle if the bus is inactive for the specified timeout period.
+	required for SMBus
+SEXTTOEN: Enable Client SCL Low Extend Time-Out
+	if enabled, the host/client will release its clock hold, if enabled, 
+	and complete the current transaction if SCL is cumulatively held low for greater than 25ms from the
+	initial START to a STOP
+MEXTTOEN: Host SCL Low Extend Time-Out (host only)
+	if enabled, the host will release its clock hold if enabled, and complete the
+	current transaction if SCL is cumulatively held low for greater than 10ms from
+	START-to-ACK, ACK-to-ACK, or ACK-to-STOP
+*/
+struct TimeoutConfigHost_t {
+	uint8_t enableMEXTTOEN:1;
+	uint8_t	enableSEXTTOEN:1;
+	uint8_t timeoutMode:2;
+	uint8_t enableLOWTOUTEN:1;
+	uint8_t :3;
+};
+
+struct TimeoutConfigClient_t {
+	uint8_t :1;
+	uint8_t	enableSEXTTOEN:1;
+	uint8_t :2;
+	uint8_t enableLOWTOUTEN:1;
+	uint8_t :3;
+};
+
+/*
+stretch_mode:	0 - stretch prior to ACK
+				1 - stretch after ACK - high-speed mode requires this mode
+bus_speed:		0 - standard mode or fast mode (up to 100 kHz, up to 400 kHz)
+				1 - fast-mode+	(up to 1MHz): note that this mode requires a baud setting such that T_high : T_low = 1:2
+				2 - high-speed mode	(up to 3.4MHz) : note that this mode requires a baud setting such that T_high : T_low = 1:2
+enable_sm:		enables smart mode, which automatically causes the device to ack/nack according to the setting in CTRLB.ACKACT 
+				whenever the DATA register is read
+baud:			used to time the high period of the serial clock (T_high), or both high and low if baudlow is zero. 
+baudlow:		used to time the low period of the serial clock (T_low). 
+*/
+void I2C_InitHost(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, bool enable_sm, uint8_t baud, uint8_t baudlow);
+
+
+void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, bool auto_addr_ack, bool enable_sm);
+
 
 void I2C_Reset(Sercom* sercom);
 void I2C_SetEnabled(Sercom* sercom, bool setEnabled);
