@@ -15,16 +15,19 @@
 int main(void)
 {
 	// configure LED0
-	GPIO_ConfigurePinAsOutput(GPIOB, LED0, true, false, -1);
-	GPIO_WritePin(GPIOB, LED0, true);
+	GPIO_SetPinDirection(GPIOB, LED0, GPIO_OUT);
+	GPIO_WritePin(GPIOB, LED0, 1);
 	
 	/* configure the EIC */
 	// enable CLK_EIC_APB - on by default
 	// enable GCLK_EIC
 	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_EIC;
 	
-	// configure button (SW0) as an input, select AF function A (EXTINT[15])
-	GPIO_ConfigurePinAsInput(GPIOA, BUTTON0, false, true, true, 0);
+	// configure button (SW0) as an input, enable pull, and select AF function A (EXTINT[15])	
+	struct GPIO_PinConfig_t sw0_config = { .enablePull = 1, .enablePMUX = 1, .alt_function = 0};
+	GPIO_ConfigurePin(GPIOA, BUTTON0, GPIO_IN, &sw0_config);
+	// set pull direction high
+	GPIO_WritePin(GPIOA, BUTTON0, 1);
 	
 	// write the EIC configuration registers (EVCTRL, WAKEUP, CONFIGy) and enable the EIC and EIC interrupts
 	GPIO_ConfigureExtInt(15, true, false, 2);

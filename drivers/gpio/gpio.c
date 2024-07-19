@@ -7,6 +7,64 @@
 
 #include "gpio.h"
 
+#define PIN_TO_MASK(pin) (1 << pin)
+
+void GPIO_SetPinDirection(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction){
+	GPIO_SetPortDirection(port, PIN_TO_MASK(pin), direction);
+};
+
+void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDirections direction){
+	switch(direction){
+		case GPIO_IN:
+			// set pins to be inputs
+			port->DIRCLR.reg = pin_mask;
+		break;
+		case GPIO_OUT:
+			// set pins to be outputs
+			port->DIRSET.reg = pin_mask;
+		break;
+	};
+};
+
+void GPIO_ConfigurePin(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config){
+	GPIO_ConfigurePort(port, PIN_TO_MASK(pin), direction, config);
+};
+
+void GPIO_ConfigurePort(PortGroup* port,  uint32_t pin_mask, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config){
+	GPIO_SetPortDirection(port, pin_mask, direction);
+	
+	uint16_t lowerPins = pin_mask & PORT_WRCONFIG_PINMASK_Msk;
+	uint16_t upperPins = (pin_mask >> 16) & PORT_WRCONFIG_PINMASK_Msk;
+		
+	uint32_t wrconfig = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX; // write pin config register and mux settings
+	if(config->enablePMUX){
+		// enable peripheral multiplexer
+		wrconfig |= PORT_WRCONFIG_PMUXEN;
+			
+		// select peripheral function
+		wrconfig |= PORT_WRCONFIG_PMUX(config->alt_function);
+	}
+	
+	if(config->driveStrength){
+		wrconfig |= PORT_WRCONFIG_DRVSTR;
+	}
+	if(config->enablePull){
+		wrconfig |= PORT_WRCONFIG_PULLEN;
+	}
+
+	if(direction == GPIO_IN || config->enableInputBuffer){ // doesn't really make sense to have an input that isn't sampled
+		wrconfig |= PORT_WRCONFIG_INEN;
+	}
+
+	// write the pin configuration
+	if(lowerPins){ 	// check if any lower pins are selected
+		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_PINMASK(lowerPins);
+	}
+	if(upperPins){ 	// check if any upper pins are selected
+		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_PINMASK(upperPins);
+	}
+};
+
 /* set all pins as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0), no peripheral functions */
 void GPIO_Reset() {
 	GPIO_ResetPort(GPIOA);
@@ -29,94 +87,6 @@ void GPIO_Clk_Control(bool setEnabled){
 	}
 }
 
-// enableRead: 1 to enable input buffer when using pin as output
-// driveStrength: 0 = normal, 1 = excedrin extra strength formula
-// function: select peripheral function. Set to -1 to disable PMUX and use as normal GPIO 
-void GPIO_ConfigurePinAsOutput(PortGroup* port, uint8_t pin, bool enableRead, bool driveStrength, int8_t function){
-	uint32_t pinMask = 0x01 << pin; // convert pin number to mask
-	GPIO_ConfigurePortAsOutput(port, pinMask, enableRead, driveStrength, function);
-}
-
-void GPIO_ConfigurePortAsOutput(PortGroup* port, uint32_t pinMask, bool enableRead, bool driveStrength, int8_t function){
-	
-	// set pin direction to output
-	port->DIRSET.reg = pinMask;
-	
-	uint16_t lowerPins = pinMask & PORT_WRCONFIG_PINMASK_Msk;
-	uint16_t upperPins = (pinMask >> 16) & PORT_WRCONFIG_PINMASK_Msk;
-	
-	uint32_t wrconfig = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX;
-
-	if(driveStrength)
-		wrconfig |= PORT_WRCONFIG_DRVSTR;
-	if(enableRead)
-		wrconfig |= PORT_WRCONFIG_INEN;
-
-	if(function != -1){
-		// enable peripheral multiplexer
-		wrconfig |= PORT_WRCONFIG_PMUXEN;
-		// select peripheral function
-		wrconfig |= PORT_WRCONFIG_PMUX(function);
-	}
-	
-	// write the pin configuration
-	if(lowerPins){ 	// check if any lower pins are selected
-		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_PINMASK(lowerPins);
-	}
-	if(upperPins){ 	// check if any upper pins are selected
-		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_PINMASK(upperPins);
-	}
-}
-
-// continuousSampling: sample continuously for use with IOBUS, increased power consumption
-// enablePull: 1 to enable pull-up/pull-down
-// pullDirection: 1 = high, 0 = low
-// function: select peripheral function. Set to -1 to disable PMUX and use as normal GPIO
-void GPIO_ConfigurePinAsInput(PortGroup* port, uint8_t pin, bool continousSampling, bool enablePull, bool pullDirection, int8_t function){
-	uint32_t pinMask = 0x01 << pin; // convert pin number to mask
-	GPIO_ConfigurePortAsInput(port, pinMask, continousSampling, enablePull, pullDirection, function);
-}
-
-void GPIO_ConfigurePortAsInput(PortGroup* port, uint32_t pinMask, bool continousSampling, bool enablePull, bool pullDirection, int8_t function){
-	// set pin direction to input
-	port->DIRCLR.reg = pinMask;
-	
-	uint16_t lowerPins = pinMask & PORT_WRCONFIG_PINMASK_Msk;
-	uint16_t upperPins = (pinMask >> 16) & PORT_WRCONFIG_PINMASK_Msk;
-		
-	uint32_t wrconfig = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_INEN;
-	if(enablePull){
-		wrconfig |= PORT_WRCONFIG_PULLEN;
-			
-		//TODO: does the wrconfig value need to be written first?
-		GPIO_WritePort(port, pinMask, pullDirection);
-	}
-	
-	if(function != -1){
-		// enable peripheral multiplexer
-		wrconfig |= PORT_WRCONFIG_PMUXEN;
-		// select peripheral function
-		wrconfig |= PORT_WRCONFIG_PMUX(function);
-	}
-	
-	// write the pin configuration
-	if(lowerPins){ 	// check if any lower pins are selected
-		wrconfig |= PORT_WRCONFIG_PINMASK(lowerPins);
-		port->WRCONFIG.reg = wrconfig;
-	}
-	if(upperPins){ 	// check if any upper pins are selected
-		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_PINMASK(upperPins);
-	}
-	
-	// set the sampling mode
-	if(continousSampling){
-		port->CTRL.reg |= pinMask;
-	}
-	else {
-		port->CTRL.reg &= ~pinMask;
-	}
-} 
-
 /* read the state of the pin */
 uint8_t GPIO_ReadPin(PortGroup* port, uint8_t pin){
 	return (GPIO_ReadPort(port) >> pin) & 0x01;
@@ -127,9 +97,8 @@ uint32_t GPIO_ReadPort(PortGroup* port){
 }
 
 /* write value to one pin. If the pin is an input, this will set the pull direction (if enabled) */
-void GPIO_WritePin(PortGroup* port, uint8_t pin, bool value){
-	uint32_t pinMask = 0x01 << pin; // convert pin number to mask
-	GPIO_WritePort(port, pinMask, value);
+void GPIO_WritePin(PortGroup* port, uint8_t pin, _Bool value){
+	GPIO_WritePort(port, PIN_TO_MASK(pin), value);
 }
 /* write multiple pins with the same value */
 void GPIO_WritePort(PortGroup* port, uint32_t pinMask, bool value){
@@ -144,8 +113,7 @@ void GPIO_WritePort(PortGroup* port, uint32_t pinMask, bool value){
 /* Toggle will also affect input pins with pull resistors enabled */
 /* toggle pin state */
 void GPIO_TogglePin(PortGroup* port, uint8_t pin){
-	uint32_t pinMask = 0x01 << pin; // convert pin number to mask
-	GPIO_TogglePort(port, pinMask);
+	GPIO_TogglePort(port, PIN_TO_MASK(pin));
 }
 /* toggle multiple pins on port */ 
 void GPIO_TogglePort(PortGroup* port, uint32_t pinMask){
