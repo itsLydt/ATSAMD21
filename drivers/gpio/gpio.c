@@ -9,23 +9,6 @@
 
 #define PIN_TO_MASK(pin) (1 << pin)
 
-void GPIO_SetPinDirection(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction){
-	GPIO_SetPortDirection(port, PIN_TO_MASK(pin), direction);
-};
-
-void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDirections direction){
-	switch(direction){
-		case GPIO_IN:
-			// set pins to be inputs
-			port->DIRCLR.reg = pin_mask;
-		break;
-		case GPIO_OUT:
-			// set pins to be outputs
-			port->DIRSET.reg = pin_mask;
-		break;
-	};
-};
-
 void GPIO_ConfigurePin(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config){
 	GPIO_ConfigurePort(port, PIN_TO_MASK(pin), direction, config);
 };
@@ -64,6 +47,24 @@ void GPIO_ConfigurePort(PortGroup* port,  uint32_t pin_mask, enum GPIO_PinDirect
 		port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_PINMASK(upperPins);
 	}
 };
+
+void GPIO_SetPinDirection(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction){
+	GPIO_SetPortDirection(port, PIN_TO_MASK(pin), direction);
+};
+
+void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDirections direction){
+	switch(direction){
+		case GPIO_IN:
+		// set pins to be inputs
+		port->DIRCLR.reg = pin_mask;
+		break;
+		case GPIO_OUT:
+		// set pins to be outputs
+		port->DIRSET.reg = pin_mask;
+		break;
+	};
+};
+
 
 /* set all pins as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0), no peripheral functions */
 void GPIO_Reset() {
