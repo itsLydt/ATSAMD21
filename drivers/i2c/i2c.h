@@ -3,6 +3,7 @@
 
 #include "sam.h"
 
+#include <stddef.h>
 #include <stdbool.h>
 
 /* enables/configures the clocks used by the I2C peripheral
@@ -58,10 +59,10 @@ enable_sm:		enables smart mode, which automatically causes the device to ack/nac
 baud:			used to time the high period of the serial clock (T_high), or both high and low if baudlow is zero. 
 baudlow:		used to time the low period of the serial clock (T_low). 
 */
-void I2C_InitHost(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, bool enable_sm, uint8_t baud, uint8_t baudlow);
+void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow);
 
 
-void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, bool auto_addr_ack, bool enable_sm);
+void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm);
 
 /* Calculate the baud settings required to achieve the specified SCL frequency given the serial clock core clock frequency, if possible 
 	gclk_freq: frequency of the serial engine clock generator (GCLK_SERCOMx_CORE), in kHz
@@ -71,6 +72,8 @@ void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_
 */
 _Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* baud, uint8_t* baudlow);
 void I2C_Reset(Sercom* sercom);
-void I2C_SetEnabled(Sercom* sercom, bool setEnabled);
+void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled);
+
+void I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len);
 
 #endif

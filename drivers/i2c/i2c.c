@@ -1,6 +1,6 @@
 #include "i2c.h"
 
-void I2C_ClkControl(uint8_t sercom_num, bool en_busClk, int8_t coreClkGenerator, int8_t slowClkGenerator){
+void I2C_ClkControl(uint8_t sercom_num, _Bool en_busClk, int8_t coreClkGenerator, int8_t slowClkGenerator){
 	uint32_t bus_mask = (0x01 << (2 + sercom_num)); // SERCOM0: bit2, SERCOM1: bit3, etc
 	if(en_busClk){
 		PM->APBCMASK.reg |= bus_mask;
@@ -38,8 +38,8 @@ void I2C_ConfigureClientTimeouts(Sercom* sercom, struct TimeoutConfigClient_t* t
 	sercom->I2CS.CTRLA.bit.SEXTTOEN = timeoutInfo->enableSEXTTOEN;
 }
 
-void I2C_InitHost(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, bool enable_sm, uint8_t baud, uint8_t baudlow){
-	I2C_SetEnabled(sercom, false);
+void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow){
+	I2C_SetEnabled(sercom, 0);
 	
 	// 1. set the mode
 	sercom->I2CM.CTRLA.bit.MODE = SERCOM_I2CM_CTRLA_MODE_I2C_MASTER_Val;
@@ -63,14 +63,14 @@ void I2C_InitHost(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t 
 		sercom->I2CM.BAUD.bit.HSBAUD = baud;
 		sercom->I2CM.BAUD.bit.HSBAUDLOW = baudlow;
 	}
-	I2C_SetEnabled(sercom, true);
+	I2C_SetEnabled(sercom, 1);
 	// set bus state to IDLE
 	sercom->I2CM.STATUS.bit.BUSSTATE = 1; 
 	// wait for bus state to be synchronized
 	while(sercom->I2CM.SYNCBUSY.bit.SYSOP);
 }
 
-void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, bool auto_addr_ack, bool enable_sm){
+void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm){
 	I2C_SetEnabled(sercom, false);
 	
 	// 1. set the mode
@@ -83,7 +83,7 @@ void I2C_InitClient(Sercom* sercom, bool stretch_mode, uint8_t bus_speed, uint8_
 	// 3. Optional: Smart mode
 	// 4. Optional: SCL low timeout
 	// 5. Address information (Address mode, address, and address mask)
-	I2C_SetEnabled(sercom, true);
+	I2C_SetEnabled(sercom, 1);
 }
 
 _Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* baud, uint8_t* baudlow){	
@@ -156,7 +156,45 @@ void I2C_Reset(Sercom* sercom){
 	while(sercom->SPI.SYNCBUSY.bit.SWRST);
 }
 
-void I2C_SetEnabled(Sercom* sercom, bool setEnabled){
+void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled){
 	sercom->I2CM.CTRLA.bit.ENABLE = setEnabled? 1 : 0;
 	while(sercom->SPI.SYNCBUSY.bit.ENABLE);
+}
+
+void I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
+	/* 1. Generate start condition, send address */
+	// In this family of microcontrollers, start signal is generated automatically when setting client address and direction
+	i2c->I2CM.ADDR.reg = (addr << 1); // bit 0 is direction of transfer (0 - write, 1 - read);
+	/* 2. Wait for ACK/NACK of address */
+	
+	/* Three possibilities:
+	1. arbitration lost or bus error
+		INTFLAG.MB and STATUS.ARBLOST set, STATUS.BUSERR may also be set
+		clear the interrupt and leave
+	2. address transmitted, no ACK
+		INTFLAG.MB and STATUS.RXNACK set
+		send stop sequence and leave
+	3. address transmitted with ACK
+		INTFLAG.MB set, STATUS.RXNACK cleared
+		begin transmitting data packets
+	*/	
+	
+	// wait until MB flag set
+	while(!i2c->I2CM.INTFLAG.bit.MB);
+	
+	uint32_t status = i2c->I2CM.STATUS.reg;
+	if(status & SERCOM_I2CM_STATUS_ARBLOST || status & SERCOM_I2CM_STATUS_BUSERR){
+		// case 1
+		return;
+	}
+	
+	if(status & SERCOM_I2CM_STATUS_RXNACK){
+		// NACK, generate stop condition
+		
+	}	
+	
+	// transmit bytes
+	for(int i = 0; i < len; i++){
+		
+	}
 }
