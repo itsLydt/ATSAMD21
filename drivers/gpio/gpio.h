@@ -67,7 +67,7 @@ void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDire
 void GPIO_SetDriveStrength(PortGroup* port, uint8_t pin, enum GPIO_DriveStrength strength);
 /* Configure whether internal pull resistors are enabled */
 void GPIO_EnablePull(PortGroup* port, uint8_t pin, _Bool enable);
-/* Configure whether a pin is readable */
+/* Configure whether pin value is sampled */
 void GPIO_EnableInputBuffer(PortGroup* port, uint8_t pin, _Bool enable);
 /* Configure whether pin is configured as alternate function mode (SERCOM, EXTINT, etc) */
 void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable);
@@ -75,7 +75,7 @@ void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable);
 void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable);
 
 /* Prevent further configuration of pins */
-//void GPIO_LockConfiguration(); // this is handled by the PAC
+void GPIO_SetConfigurationLocked(_Bool lock);
 
 /*******************
 Reading and writing pin values
