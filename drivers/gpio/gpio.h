@@ -15,7 +15,6 @@
 #include "sam.h"
 
 //TODO: IOBUS implementation?
-#define GPIO_BASE_ADDR 0x41004400
 #define GPIOA (&PORT->Group[0])
 #define GPIOB (&PORT->Group[1])
 
