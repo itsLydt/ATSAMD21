@@ -23,22 +23,24 @@ bool flag = false;
 int main(void)
 {
 	/* Configure the user LED */
-	GPIO_ConfigurePinAsOutput(GPIOB, LED0, false, false, -1);
+	GPIO_SetPinDirection(GPIOB, LED0, GPIO_OUT);
 	GPIO_WritePin(GPIOB, LED0, true);
 	
 	/* configure SPI pins */
-	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD0, false, false, 2); // AF mode C, MOSI
-	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD1, false, false, 2); // SCK
-	GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD2, false, false, 2); // SS
-	GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD3, false, false, false, 2); //MISO
-
+	uint32_t sercom_out = (1 << SERCOM0_PAD0) | (1 << SERCOM0_PAD1) | (1 << SERCOM0_PAD2);
+	struct GPIO_PinConfig_t sercom_config = { .enablePMUX = 1, .alt_function = 2 };
+	GPIO_ConfigurePort(GPIOA, sercom_out, GPIO_OUT, &sercom_config);
+	GPIO_ConfigurePin(GPIOA, SERCOM0_PAD3, GPIO_IN, &sercom_config);
 	/* configure the EIC clocks */
 	// CLK_EIC_APB - on by default
 	// enable GCLK_EIC
 	GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_EIC;
 	
 	// configure button (SW0) as an input, select AF function A (EXTINT[15])
-	GPIO_ConfigurePinAsInput(GPIOA, BUTTON0, false, true, true, 0);
+	struct GPIO_PinConfig_t btn_config = { .enablePull = 1, .enablePMUX = 1, .alt_function = 0};
+	GPIO_ConfigurePin(GPIOA, BUTTON0, GPIO_IN, &btn_config);
+	GPIO_WritePin(GPIOA, BUTTON0, 1);	// enable pull up
+	
 	// write the EIC configuration registers (EVCTRL, WAKEUP, CONFIGy) and enable the EIC and EIC interrupts
 	GPIO_ConfigureExtInt(15, true, false, 2);
 	GPIO_EnableExtInt(15);
