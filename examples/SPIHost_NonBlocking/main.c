@@ -31,6 +31,7 @@ int main(void)
 	struct GPIO_PinConfig_t sercom_config = { .enablePMUX = 1, .alt_function = 2 };
 	GPIO_ConfigurePort(GPIOA, sercom_out, GPIO_OUT, &sercom_config);
 	GPIO_ConfigurePin(GPIOA, SERCOM0_PAD3, GPIO_IN, &sercom_config);
+	
 	/* configure the EIC clocks */
 	// CLK_EIC_APB - on by default
 	// enable GCLK_EIC
