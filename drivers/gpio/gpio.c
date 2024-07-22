@@ -84,6 +84,41 @@ void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDire
 	};
 };
 
+void GPIO_SetDriveStrength(PortGroup* port, uint8_t pin, enum GPIO_DriveStrength strength){
+	port->PINCFG[pin].bit.DRVSTR = strength == STRONG? 1 : 0;
+}
+
+void GPIO_EnablePull(PortGroup* port, uint8_t pin, _Bool enable){
+	port->PINCFG[pin].bit.PULLEN = enable? 1 : 0;	
+}
+
+void GPIO_EnableInputBuffer(PortGroup* port, uint8_t pin, _Bool enable){
+	port->PINCFG[pin].bit.INEN = enable? 1 : 0;
+}
+
+void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable){
+	port->PINCFG[pin].bit.PMUXEN = enable? 1 : 0;
+}
+
+void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable){
+	if(enable){
+		port->CTRL.reg |= PIN_TO_MASK(pin);
+	}
+	else {
+		port->CTRL.reg &= ~(PIN_TO_MASK(pin));
+	}
+}
+
+void GPIO_SetConfigurationLocked(_Bool lock){
+	uint32_t mask = 0x01 << 3;
+	if(lock){
+		PAC1->WPSET.reg = mask;	
+	}
+	else {
+		PAC1->WPCLR.reg = mask;
+	}
+}
+
 /* read the state of the pin */
 uint8_t GPIO_ReadPin(PortGroup* port, uint8_t pin){
 	return (GPIO_ReadPort(port) >> pin) & 0x01;
