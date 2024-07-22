@@ -54,6 +54,9 @@ void GPIO_ResetPort(PortGroup* port); // reset one port
 Configure individual things
 *******************/
 
+/* Enable or disable PORT bus clock CLK_PORT_APB (default state: enabled) */
+void GPIO_Clk_Control(bool setEnabled);
+
 /* Configure direction of single pin in specified port */
 void GPIO_SetPinDirection(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction);
 /* Configure direction of selected pins in specified port */
@@ -71,25 +74,34 @@ void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable);
 /* Configure sampling mode of input pin */
 void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable);
 
+/* Prevent further configuration of pins */
+//void GPIO_LockConfiguration(); // this is handled by the PAC
 
+/*******************
+Reading and writing pin values
+*******************/
 
-
-void GPIO_Clk_Control(bool setEnabled); // enable or disable PORT bus clock CLK_PORT_APB (default state: enabled)
-
+/* Read a pin from specified port group */
 uint8_t GPIO_ReadPin(PortGroup* port, uint8_t pin);
+/* Read the entire port */
 uint32_t GPIO_ReadPort(PortGroup* port);
 
-void GPIO_WritePin(PortGroup* port, uint8_t pin, bool value);	// write value to one pin
-void GPIO_WritePort(PortGroup* port, uint32_t pins, bool value); // write multiple pins with the same value
-void GPIO_TogglePin(PortGroup* port, uint8_t pin);		// toggle pin on port
-void GPIO_TogglePort(PortGroup* port, uint32_t pins);	// toggle multiple pins on port
+/* Write a value to a single pin */
+void GPIO_WritePin(PortGroup* port, uint8_t pin, _Bool value);
+/* Write a value to multiple pins */
+void GPIO_WritePort(PortGroup* port, uint32_t pins, _Bool value);
+/* Toggle the state of a single pin */
+void GPIO_TogglePin(PortGroup* port, uint8_t pin);
+/* Toggle the state of multiple pins */
+void GPIO_TogglePort(PortGroup* port, uint32_t pins);
 
+
+/*******************
+Getting interrupts from changes in pin values
+*******************/
 // use EIC to trigger interrupts from IO lines
 void GPIO_EnableExtInt(uint8_t extint_num);
-void GPIO_ConfigureExtInt(uint8_t extint_num, bool enableWakeup, bool enableFiltering, uint8_t detectionMode);
+void GPIO_ConfigureExtInt(uint8_t extint_num, _Bool enableWakeup, _Bool enableFiltering, uint8_t detectionMode);
 void GPIO_DisableExtInt(uint8_t extint_num);
-
-// this is handled by the PAC
-//void GPIO_LockConfiguration(); // prevent further configuration
 
 #endif /* GPIO_H_ */

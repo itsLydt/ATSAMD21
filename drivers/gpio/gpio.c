@@ -48,6 +48,25 @@ void GPIO_ConfigurePort(PortGroup* port,  uint32_t pin_mask, enum GPIO_PinDirect
 	}
 };
 
+void GPIO_Reset() {
+	GPIO_ResetPort(GPIOA);
+	GPIO_ResetPort(GPIOB);
+}
+
+void GPIO_ResetPort(PortGroup* port){
+	port->WRCONFIG.reg = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure lower 16
+	port->WRCONFIG.reg = PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure upper 16
+}
+
+void GPIO_Clk_Control(bool setEnabled){
+	if(setEnabled){
+		PM->APBBMASK.bit.PORT_ = 1; // set bit 3 to enable PORT APB clock
+	}
+	else {
+		PM->APBBMASK.bit.PORT_ = 0; // clear bit 3 to disable PORT APB clock
+	}
+}
+
 void GPIO_SetPinDirection(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction){
 	GPIO_SetPortDirection(port, PIN_TO_MASK(pin), direction);
 };
@@ -65,28 +84,6 @@ void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDire
 	};
 };
 
-/* set all pins as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0), no peripheral functions */
-void GPIO_Reset() {
-	GPIO_ResetPort(GPIOA);
-	GPIO_ResetPort(GPIOB);
-}
-
-/* set pins of given port as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0), no peripheral functions */
-void GPIO_ResetPort(PortGroup* port){
-	port->WRCONFIG.reg = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure lower 16
-	port->WRCONFIG.reg = PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure upper 16
-}
-
- /* enable or disable PORT bus clock CLK_PORT_APB (default state: enabled) */
-void GPIO_Clk_Control(bool setEnabled){
-	if(setEnabled){
-		PM->APBBMASK.bit.PORT_ = 1; // set bit 3 to enable PORT APB clock
-	}
-	else {
-		PM->APBBMASK.bit.PORT_ = 0; // clear bit 3 to disable PORT APB clock
-	}
-}
-
 /* read the state of the pin */
 uint8_t GPIO_ReadPin(PortGroup* port, uint8_t pin){
 	return (GPIO_ReadPort(port) >> pin) & 0x01;
@@ -101,7 +98,7 @@ void GPIO_WritePin(PortGroup* port, uint8_t pin, _Bool value){
 	GPIO_WritePort(port, PIN_TO_MASK(pin), value);
 }
 /* write multiple pins with the same value */
-void GPIO_WritePort(PortGroup* port, uint32_t pinMask, bool value){
+void GPIO_WritePort(PortGroup* port, uint32_t pinMask, _Bool value){
 	if(value){
 		port->OUTSET.reg = PORT_OUTSET_OUTSET(pinMask); // set all indicated pins high
 	}
@@ -124,7 +121,7 @@ void GPIO_EnableExtInt(uint8_t extint_num){
 	EIC->INTENSET.reg = EIC_INTENSET_EXTINT(1 << extint_num);;
 }
 // configure the EIC to trigger interrupts from IO lines
-void GPIO_ConfigureExtInt(uint8_t extint_num, bool enableWakeup, bool enableFiltering, uint8_t detectionMode){
+void GPIO_ConfigureExtInt(uint8_t extint_num, _Bool enableWakeup, _Bool enableFiltering, uint8_t detectionMode){
 
 	if(enableWakeup){
 		EIC->WAKEUP.reg |= EIC_WAKEUP_WAKEUPEN(1 << extint_num);
