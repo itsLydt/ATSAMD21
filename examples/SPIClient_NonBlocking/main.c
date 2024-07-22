@@ -19,14 +19,19 @@
 
 int main(void)
 {
-    GPIO_ConfigurePinAsOutput(GPIOB, LED0, false, false, -1);
-    GPIO_WritePin(GPIOB, LED0, true);
+	GPIO_SetPinDirection(GPIOB, LED0, GPIO_OUT);
+	GPIO_WritePin(GPIOB, LED0, true);
     	
     /* configure SPI pins */
-    GPIO_ConfigurePinAsOutput(GPIOA, SERCOM0_PAD0, false, false, 2); // AF mode C, MISO
-    GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD1, false, true, false, 2); // SCK, pull down
-    GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD2, false, true, true, 2); // SS, pull up
-    GPIO_ConfigurePinAsInput(GPIOA, SERCOM0_PAD3, false, true, true, 2); // MOSI
+	// MISO
+	struct GPIO_PinConfig_t sercom_config = { .enablePMUX = 1, .alt_function = 2 };
+	GPIO_ConfigurePin(GPIOA, SERCOM0_PAD0, GPIO_OUT, &sercom_config);
+	//SCK in, SS in, MOSI
+	uint32_t sercom_in = (1 << SERCOM0_PAD1) | (1 << SERCOM0_PAD2) | (1 << SERCOM0_PAD3);
+	sercom_config.enablePull = 1;
+	GPIO_ConfigurePort(GPIOA, sercom_in, GPIO_IN, &sercom_config);
+	GPIO_WritePin(GPIOA, SERCOM0_PAD2, 1);
+	GPIO_WritePin(GPIOA, SERCOM0_PAD3, 1);
 	
 	SPI_ClkControl(0, true, -1);
 	SPI_InitClient(SERCOM0, 0, -1, 0, 0);

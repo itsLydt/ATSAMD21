@@ -40,7 +40,7 @@ int main(void)
 	// configure button (SW0) as an input, select AF function A (EXTINT[15])
 	struct GPIO_PinConfig_t btn_config = { .enablePull = 1, .enablePMUX = 1, .alt_function = 0};
 	GPIO_ConfigurePin(GPIOA, BUTTON0, GPIO_IN, &btn_config);
-	GPIO_WritePin(GPIOA, BUTTON0, 1);	// enable pull up
+	GPIO_WritePin(GPIOA, BUTTON0, 1);	// set pull up
 	
 	// write the EIC configuration registers (EVCTRL, WAKEUP, CONFIGy) and enable the EIC and EIC interrupts
 	GPIO_ConfigureExtInt(15, true, false, 2);
