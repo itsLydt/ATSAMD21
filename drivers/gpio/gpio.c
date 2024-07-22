@@ -65,7 +65,6 @@ void GPIO_SetPortDirection(PortGroup* port, uint32_t pin_mask, enum GPIO_PinDire
 	};
 };
 
-
 /* set all pins as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0), no peripheral functions */
 void GPIO_Reset() {
 	GPIO_ResetPort(GPIOA);

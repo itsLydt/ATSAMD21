@@ -46,6 +46,10 @@ void GPIO_ConfigurePin(PortGroup* port, uint8_t pin, enum GPIO_PinDirections dir
 /* Configure settings, including direction, of selected pins in specified port */
 void GPIO_ConfigurePort(PortGroup* port,  uint32_t pin_mask, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config);
 
+/* Reset configuration to default */
+void GPIO_Reset(); // reverts all pins to be configured as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0) with WRCONFIG
+void GPIO_ResetPort(PortGroup* port); // reset one port
+
 /*******************
 Configure individual things
 *******************/
@@ -68,8 +72,7 @@ void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable);
 void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable);
 
 
-void GPIO_Reset(); // all pins configured as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0) with WRCONFIG
-void GPIO_ResetPort(PortGroup* port); // reset one port
+
 
 void GPIO_Clk_Control(bool setEnabled); // enable or disable PORT bus clock CLK_PORT_APB (default state: enabled)
 
