@@ -161,7 +161,13 @@ void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled){
 	while(sercom->SPI.SYNCBUSY.bit.ENABLE);
 }
 
-void I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len){
+void I2CHost_GenerateStop(Sercom* i2c){
+	i2c->I2CM.CTRLB.bit.CMD = 0x3;
+	// wait for stop condition to occur
+	while(i2c->I2CM.SYNCBUSY.bit.SYSOP);
+}
+
+size_t I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, size_t len){
 	/* 1. Generate start condition, send address */
 	// In this family of microcontrollers, start signal is generated automatically when setting client address and direction
 	i2c->I2CM.ADDR.reg = (addr << 1); // bit 0 is direction of transfer (0 - write, 1 - read);
@@ -185,16 +191,29 @@ void I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, uint8_t* rxB
 	uint32_t status = i2c->I2CM.STATUS.reg;
 	if(status & SERCOM_I2CM_STATUS_ARBLOST || status & SERCOM_I2CM_STATUS_BUSERR){
 		// case 1
-		return;
+		return 0;
 	}
 	
 	if(status & SERCOM_I2CM_STATUS_RXNACK){
 		// NACK, generate stop condition
-		
+		I2CHost_GenerateStop(i2c);
+		return 0;
 	}	
 	
 	// transmit bytes
-	for(int i = 0; i < len; i++){
-		
+	int b_written;
+	for(b_written = 0; b_written < len; b_written++){
+		i2c->I2CM.DATA.reg = txBuffer[b_written];
+		// wait for transaction to take place
+		while(i2c->I2CM.SYNCBUSY.bit.SYSOP);
+		// wait until MB flag set
+		while(!i2c->I2CM.INTFLAG.bit.MB);
+		// check if ack
+		if(i2c->I2CM.STATUS.bit.RXNACK){
+			//not acknowledged, bail
+			break;
+		}
 	}
+	I2CHost_GenerateStop(i2c);
+	return b_written;
 }

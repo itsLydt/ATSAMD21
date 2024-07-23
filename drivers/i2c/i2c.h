@@ -74,6 +74,6 @@ _Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* ba
 void I2C_Reset(Sercom* sercom);
 void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled);
 
-void I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, uint8_t* rxBuffer, size_t len);
+size_t I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, size_t len);
 
 #endif
