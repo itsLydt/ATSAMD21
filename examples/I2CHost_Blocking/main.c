@@ -45,7 +45,36 @@ int main(void)
 	GPIO_ConfigureExtInt(15, true, false, 2);
 	GPIO_EnableExtInt(15);
 	
-    while (1) 
-    {
-    }
+	I2C_ClkControl(0, true, 0, -1); // enable SERCOM0 bus clock, set SERCOM0 core clock to GEN0
+	uint8_t baud, baudlow;
+	if(I2C_TryCalcBaud(1000, 50, &baud, &baudlow)){
+		I2C_InitHost(SERCOM0, 0, 0, 3, true, baud, baudlow);
+	}
+	else {
+		// target baud rate not possible, etc
+		return -1;
+	}
+	
+    while (1);
+}
+
+void EIC_Handler(){
+	//temporarily disable the interrupt
+	GPIO_DisableExtInt(15);
+	// clear the interrupt
+	EIC->INTFLAG.reg = EIC_INTENSET_EXTINT15;
+	
+	uint8_t addr = 10;
+	char* msg = "An extremely important sequence of bytes";
+	uint32_t delay = 50000;
+	
+	GPIO_WritePin(GPIOB, LED0, false);
+	I2CHost_SendData(SERCOM0, addr, msg, strlen(msg));
+	
+	// wait
+	for(int i = 0; i < delay; i++);
+	
+	GPIO_WritePin(GPIOB, LED0, true);
+	// re-enable
+	GPIO_EnableExtInt(15);
 }
