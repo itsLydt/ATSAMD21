@@ -100,6 +100,21 @@ void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable){
 	port->PINCFG[pin].bit.PMUXEN = enable? 1 : 0;
 }
 
+void GPIO_SetPeripheralFunction(PortGroup* port, uint8_t pin, uint8_t alt_function){
+	uint32_t wrconfig = PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PMUX(alt_function);
+	uint8_t shift = 0;
+	
+	if(pin > 15){
+		wrconfig |= PORT_WRCONFIG_HWSEL;
+		shift = 16;
+	}
+	uint32_t pin_mask = 1 << (pin - shift);
+	port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_PINMASK(pin_mask);
+
+	GPIO_EnablePMUX(port, pin, 1);
+}
+
+
 void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable){
 	if(enable){
 		port->CTRL.reg |= PIN_TO_MASK(pin);

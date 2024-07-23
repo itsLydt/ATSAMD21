@@ -70,6 +70,9 @@ void GPIO_EnablePull(PortGroup* port, uint8_t pin, _Bool enable);
 void GPIO_EnableInputBuffer(PortGroup* port, uint8_t pin, _Bool enable);
 /* Configure whether pin is configured as alternate function mode (SERCOM, EXTINT, etc) */
 void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable);
+/* Configure pin to perform peripheral function and enable PMUX */
+void GPIO_SetPeripheralFunction(PortGroup* port, uint8_t pin, uint8_t alt_function);
+
 /* Configure sampling mode of input pin */
 void GPIO_EnableContinuousSampling(PortGroup* port, uint8_t pin, _Bool enable);
 
