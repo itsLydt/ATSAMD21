@@ -27,10 +27,10 @@ int main(void)
 	GPIO_WritePin(GPIOB, LED0, true);
 	
 	/* configure SPI pins */
-	uint32_t sercom_out = (1 << SERCOM0_PAD0) | (1 << SERCOM0_PAD1) | (1 << SERCOM0_PAD2);
-	struct GPIO_PinConfig_t sercom_config = { .enablePMUX = 1, .alt_function = 2 };
-	GPIO_ConfigurePort(GPIOA, sercom_out, GPIO_OUT, &sercom_config);
-	GPIO_ConfigurePin(GPIOA, SERCOM0_PAD3, GPIO_IN, &sercom_config);
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD0, 2); //MOSI
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD1, 2); //SCLK
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD2, 2); //SS
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD3, 2); //MISO
 	
 	/* configure the EIC clocks */
 	// CLK_EIC_APB - on by default

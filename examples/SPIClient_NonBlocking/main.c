@@ -23,15 +23,11 @@ int main(void)
 	GPIO_WritePin(GPIOB, LED0, true);
     	
     /* configure SPI pins */
-	// MISO
-	struct GPIO_PinConfig_t sercom_config = { .enablePMUX = 1, .alt_function = 2 };
-	GPIO_ConfigurePin(GPIOA, SERCOM0_PAD0, GPIO_OUT, &sercom_config);
-	//SCK in, SS in, MOSI
-	uint32_t sercom_in = (1 << SERCOM0_PAD1) | (1 << SERCOM0_PAD2) | (1 << SERCOM0_PAD3);
-	sercom_config.enablePull = 1;
-	GPIO_ConfigurePort(GPIOA, sercom_in, GPIO_IN, &sercom_config);
-	GPIO_WritePin(GPIOA, SERCOM0_PAD2, 1);
-	GPIO_WritePin(GPIOA, SERCOM0_PAD3, 1);
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD0, 2); //MISO
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD1, 2); //SCK in
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD2, 2); //SS in
+	GPIO_SetPeripheralFunction(GPIOA, SERCOM0_PAD3, 2); //MOSI
+
 	
 	SPI_ClkControl(0, true, -1);
 	SPI_InitClient(SERCOM0, 0, -1, 0, 0);
