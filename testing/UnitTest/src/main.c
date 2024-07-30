@@ -34,6 +34,7 @@
 #include <asf.h>
 
 #include "unity.h"
+#include "GPIO_tests.h"
 
 #define STRING_EOL    "\r"
 #define STRING_HEADER "-- Unit Testing with Unity and SERCOM3 UART --\r\n" \
@@ -66,6 +67,14 @@ void UnityHelperDeadLoop(void)
 	while(1) {};
 }
 
+void setUp(void) {
+	// set stuff up here
+}
+
+void tearDown(void) {
+	// clean stuff up here
+}
+
 int main (void)
 {
 	system_init();
@@ -75,4 +84,11 @@ int main (void)
 	
 	/* Output header information */
 	puts(STRING_HEADER);
+	
+	puts("Running GPIO driver tests"STRING_EOL);
+	UNITY_BEGIN();
+	RUN_TEST(test_myFailingTest);
+	RUN_TEST(test_myPassingTest);
+	return UNITY_END();
+	
 }

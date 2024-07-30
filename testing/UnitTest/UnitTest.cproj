@@ -614,6 +614,12 @@
     <Compile Include="src\ASF\sam0\utils\stdio\write.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\GPIO_tests.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GPIO_tests.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\unity_config.h">
       <SubType>compile</SubType>
     </Compile>
