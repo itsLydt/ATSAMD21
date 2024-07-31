@@ -8,11 +8,11 @@
 #ifndef UNITY_CONFIG_H_
 #define UNITY_CONFIG_H_
 
-#include "stdio_serial.h"
+#include "uart_console_support.h"
 
 #define UNITY_INCLUDE_EXEC_TIME
-#define UNITY_OUTPUT_CHAR(a)                    putchar(a)
-#define UNITY_OUTPUT_FLUSH()                    puts("\r\n")
+#define UNITY_OUTPUT_CHAR(a)                    uart_writechar(a)
+#define UNITY_OUTPUT_FLUSH()                    uart_writestr("\r\n")
 #define UNITY_PRINT_EOL()						UNITY_OUTPUT_FLUSH()
 
 
