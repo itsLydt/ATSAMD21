@@ -164,7 +164,7 @@ void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled){
 void I2CHost_GenerateStop(Sercom* i2c){
 	i2c->I2CM.CTRLB.bit.CMD = 0x3;
 	// wait for stop condition to occur
-	while(i2c->I2CM.SYNCBUSY.bit.SYSOP);
+	//while(i2c->I2CM.SYNCBUSY.bit.SYSOP);
 }
 
 size_t I2CHost_SendData(Sercom* i2c, uint8_t addr, uint8_t* txBuffer, size_t len){
