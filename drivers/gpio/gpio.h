@@ -46,7 +46,7 @@ void GPIO_ConfigurePin(PortGroup* port, uint8_t pin, enum GPIO_PinDirections dir
 void GPIO_ConfigurePort(PortGroup* port,  uint32_t pin_mask, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config);
 
 /* Reset configuration to default */
-void GPIO_Reset(); // reverts all pins to be configured as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0) with WRCONFIG
+void GPIO_Reset(void); // reverts all pins to be configured as inputs with input buffers, output buffers, and pull disabled (PULLEN, INEN, DIR all 0) with WRCONFIG
 void GPIO_ResetPort(PortGroup* port); // reset one port
 
 /*******************
