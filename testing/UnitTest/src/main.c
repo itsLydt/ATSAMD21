@@ -41,7 +41,16 @@ int main(void)
 	uart_writestr(STRING_HEADER);
 	uart_writestr("Running GPIO driver tests"STRING_EOL);
 	UNITY_BEGIN();
-	RUN_TEST(test_myFailingTest);
-	RUN_TEST(test_myPassingTest);
+	RUN_TEST(t_pinToMask);
+
+	RUN_TEST(t_setPinsAsOutput);
+	RUN_TEST(t_setPinsAsInput);
+	
+	RUN_TEST(t_setPortsAsOutput);
+	RUN_TEST(t_setPortsAsInput);
+	
+	RUN_TEST(t_randomPinDirections);
+
+	RUN_TEST(t_resetPort);
 	return UNITY_END();
 }

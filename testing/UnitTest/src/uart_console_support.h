@@ -10,7 +10,6 @@
 #define UART_SUPPORT_H_
 
 #include <stddef.h>
-
 #include "sam.h"
 
 /**
