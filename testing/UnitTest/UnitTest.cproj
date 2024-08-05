@@ -110,6 +110,7 @@
       <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
       <Value>../../unity/src</Value>
       <Value>../src</Value>
+      <Value>../../../drivers/gpio</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize debugging experience (-Og)</armgcc.compiler.optimization.level>
@@ -148,6 +149,14 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\drivers\gpio\gpio.c">
+      <SubType>compile</SubType>
+      <Link>src\gpio.c</Link>
+    </Compile>
+    <Compile Include="..\..\drivers\gpio\gpio.h">
+      <SubType>compile</SubType>
+      <Link>src\gpio.h</Link>
+    </Compile>
     <Compile Include="..\unity\src\unity.c">
       <SubType>compile</SubType>
       <Link>src\unity.c</Link>

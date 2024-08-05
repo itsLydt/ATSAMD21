@@ -5,6 +5,7 @@
  */ 
 
 #include "gpio_tests.h"
+#include "gpio.h"
 
 void test_myPassingTest(void){
 	TEST_ASSERT_EQUAL(0, 0);

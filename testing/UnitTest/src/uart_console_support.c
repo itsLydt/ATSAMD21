@@ -14,11 +14,11 @@
 #define PAD2 24 //PA24
 #define PAD3 25	//PA25
 
-void GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable){
+void _GPIO_EnablePMUX(PortGroup* port, uint8_t pin, _Bool enable){
 	port->PINCFG[pin].bit.PMUXEN = enable? 1 : 0;
 }
 
-void GPIO_SetPeripheralFunction(PortGroup* port, uint8_t pin, uint8_t alt_function){
+void _GPIO_SetPeripheralFunction(PortGroup* port, uint8_t pin, uint8_t alt_function){
 	uint32_t wrconfig = PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PMUX(alt_function);
 	uint8_t shift = 0;
 	
@@ -29,7 +29,7 @@ void GPIO_SetPeripheralFunction(PortGroup* port, uint8_t pin, uint8_t alt_functi
 	uint32_t pin_mask = 1 << (pin - shift);
 	port->WRCONFIG.reg = wrconfig | PORT_WRCONFIG_PINMASK(pin_mask);
 
-	GPIO_EnablePMUX(port, pin, 1);
+	_GPIO_EnablePMUX(port, pin, 1);
 }
 
 /**
@@ -152,8 +152,8 @@ void _sercom_get_async_baud_val(
 	 while(SERCOM3->USART.SYNCBUSY.reg);
 
 	 // configure pins
-	 GPIO_SetPeripheralFunction(&PORT->Group[0], PAD0, 2);
-	 GPIO_SetPeripheralFunction(&PORT->Group[0], PAD1, 2);
+	 _GPIO_SetPeripheralFunction(&PORT->Group[0], PAD0, 2);
+	 _GPIO_SetPeripheralFunction(&PORT->Group[0], PAD1, 2);
 	 
 	 SERCOM3->USART.CTRLA.bit.ENABLE = 1;
 	while(SERCOM3->USART.SYNCBUSY.reg);

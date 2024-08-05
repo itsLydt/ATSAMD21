@@ -1,0 +1,17 @@
+Device ATSAMD21J18A
+
+set oscillator.frequency 1
+set oscillator.frequencyunit Mega
+
+Set uart3io.output file
+set uart3io.outputfile "C:\Users\lydia.klaus\Documents\out.txt"
+Set uart3io.uartioenabled true
+
+Hwtool SIM
+Program "./Debug/UnitTest.elf"
+Reset
+Sleep 500
+
+run
+wait 200000
+Quit
