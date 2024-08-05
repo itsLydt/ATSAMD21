@@ -7,8 +7,6 @@
 
 #include "gpio.h"
 
-#define PIN_TO_MASK(pin) (1 << pin)
-
 void GPIO_ConfigurePin(PortGroup* port, uint8_t pin, enum GPIO_PinDirections direction, struct GPIO_PinConfig_t* config){
 	GPIO_ConfigurePort(port, PIN_TO_MASK(pin), direction, config);
 };
@@ -54,6 +52,7 @@ void GPIO_Reset() {
 }
 
 void GPIO_ResetPort(PortGroup* port){
+	GPIO_SetPortDirection(port, 0xFFFFFFFF, GPIO_IN);
 	port->WRCONFIG.reg = PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure lower 16
 	port->WRCONFIG.reg = PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_WRPMUX | PORT_WRCONFIG_PINMASK_Msk; //configure upper 16
 }

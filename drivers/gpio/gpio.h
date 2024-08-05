@@ -18,6 +18,8 @@
 #define GPIOA (&PORT->Group[0])
 #define GPIOB (&PORT->Group[1])
 
+#define PIN_TO_MASK(pin) (1 << pin)
+
 enum GPIO_PinDirections {
 	GPIO_IN = 0,
 	GPIO_OUT = 1
