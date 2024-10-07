@@ -5,6 +5,7 @@
  * Author : itsLydt
  */ 
 
+#include <string.h>
 
 #include "sam.h"
 
@@ -69,7 +70,7 @@ void EIC_Handler(){
 	uint32_t delay = 50000;
 	
 	GPIO_WritePin(GPIOB, LED0, false);
-	I2CHost_SendData(SERCOM0, addr, msg, strlen(msg));
+	I2CHost_SendData(SERCOM0, addr, (unsigned char*)msg, strlen(msg));
 	
 	// wait
 	for(int i = 0; i < delay; i++);
