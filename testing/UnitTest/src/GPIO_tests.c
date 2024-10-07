@@ -7,6 +7,10 @@
 #include "gpio_tests.h"
 #include "gpio.h"
 
+#define BUFFER_SIZE 256
+char msgBuffer[BUFFER_SIZE];
+const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
+
 void t_pinToMask(void){
 	for(int pin = 0; pin < 32; pin++){
 		TEST_ASSERT_BIT_HIGH(pin, PIN_TO_MASK(pin));
@@ -16,8 +20,6 @@ void t_pinToMask(void){
 // port A does not implement pins 26 and 29
 // port B does not implement pins 18, 19, 20, 21, 24, 25, 26, 27, 28, and 29
 void t_setPinsAsOutput(void){
-	const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
-	
 	PortGroup* port = GPIOA;
 	char pinStr[3];
 	for(int pin = 0; pin < 32; pin++){
@@ -50,9 +52,7 @@ void t_setPinsAsOutput(void){
 	TEST_ASSERT_BITS_HIGH(implementedPins[1], port->DIR.reg);
 };
 
-void t_setPinsAsInput(void){
-	const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
-	
+void t_setPinsAsInput(void){	
 	PortGroup* port = GPIOA;
 	char pinStr[3];
 	for(int pin = 0; pin < 32; pin++){
@@ -86,7 +86,6 @@ void t_setPinsAsInput(void){
 };
 
 void t_setPortsAsInput(void){
-	const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
 	GPIO_SetPortDirection(GPIOA, 0xFFFFFFFF, GPIO_IN);
 	TEST_ASSERT_BITS_LOW(implementedPins[0], GPIOA->DIR.reg);
 
@@ -95,7 +94,6 @@ void t_setPortsAsInput(void){
 }
 
 void t_setPortsAsOutput(void){
-	const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
 	GPIO_SetPortDirection(GPIOA, 0xFFFFFFFF, GPIO_OUT);
 	TEST_ASSERT_BITS_HIGH(implementedPins[0], GPIOA->DIR.reg);
 
@@ -104,11 +102,9 @@ void t_setPortsAsOutput(void){
 }
 
 void t_randomPinDirections(void){
-	srand(time(NULL));
-	const uint32_t implementedPins[3] = PORT_PIN_IMPLEMENTED;
-	for(int i = 0; i < 100; i++){
+	for(int i = 0; i < 1000; i++){
 		uint8_t portNum = rand() % 2;
-		uint32_t mask = rand() && implementedPins[portNum];
+		uint32_t mask = rand() & implementedPins[portNum];
 		enum GPIO_PinDirections direction = rand() % 2? GPIO_OUT : GPIO_IN;
 		GPIO_SetPortDirection(&PORT->Group[portNum], mask, direction);
 		
