@@ -57,7 +57,7 @@ enum I2C_BusMode {
 /*
 stretch_mode:	0 - stretch prior to ACK
 				1 - stretch after ACK - high-speed mode requires this mode
-
+bus_speed:		see I2C_BusMode
 enable_sm:		enables smart mode, which automatically causes the device to ack/nack according to the setting in CTRLB.ACKACT 
 				whenever the DATA register is read
 baud:			used to time the high period of the serial clock (T_high), or both high and low if baudlow is zero. 
