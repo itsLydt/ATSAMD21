@@ -1,5 +1,10 @@
 #include "i2c.h"
 
+#define I2C_STANDARD_MODE_FREQ_kHz 100
+#define I2C_FAST_MODE_FREQ_kHz 400
+#define I2C_FAST_MODE_PLUS_FREQ_kHz 1000
+#define I2C_HIGH_SPEED_MODE_FREQ_kHz 4300
+
 void I2C_ClkControl(uint8_t sercom_num, _Bool en_busClk, int8_t coreClkGenerator, int8_t slowClkGenerator){
 	uint32_t bus_mask = (0x01 << (2 + sercom_num)); // SERCOM0: bit2, SERCOM1: bit3, etc
 	if(en_busClk){
@@ -100,25 +105,25 @@ _Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* ba
 	uint16_t min_clk_ratio;
 	uint8_t rise_mod;
 	uint16_t b;
-	if(target_sclk_freq <= 100){
+	if(target_sclk_freq <= I2C_STANDARD_MODE_FREQ_kHz){
 		// standard mode
 		rise_mod = gclk_freq / 1000; // f_CLK (kHz) * 1000 (ns) / 1 x 10^6 -> f_CLK / 1000
 		min_clk_ratio = 10 + 2 + rise_mod;
 		b = clk_ratio - 10 - rise_mod; // >= 2
 	}
-	else if(target_sclk_freq <= 400){
+	else if(target_sclk_freq <= I2C_FAST_MODE_FREQ_kHz){
 		// fast mode
 		rise_mod = (gclk_freq * 3) / 10000; // f_CLK (kHz) * 300 (ns) / 1 x 10^6 ->  3*f_CLK/10000
 		min_clk_ratio = 10 + 2 + rise_mod;
 		b = clk_ratio - 10 - rise_mod; // >= 2
 	}
-	else if(target_sclk_freq <= 1000){
+	else if(target_sclk_freq <= I2C_FAST_MODE_PLUS_FREQ_kHz){
 		// fast-mode+
 		rise_mod = (gclk_freq * 3) / 25000;	// f_CLK (kHz) * 120 (ns) / 1 x 10^6 ->  3*f_CLK/25000
 		min_clk_ratio = 10 + 3 + rise_mod;
 		b = clk_ratio - 10 - rise_mod; // >= 3
 	}
-	else if( target_sclk_freq <= 3400){
+	else if( target_sclk_freq <= I2C_HIGH_SPEED_MODE_FREQ_kHz){
 		// high speed mode
 		rise_mod = 0;
 		min_clk_ratio = 2 + 3;
@@ -138,7 +143,7 @@ _Bool I2C_TryCalcBaud(uint16_t gclk_freq, uint16_t target_sclk_freq, uint8_t* ba
 		return false;
 	}
 	
-	if(target_sclk_freq <= 400){
+	if(target_sclk_freq <= I2C_FAST_MODE_FREQ_kHz){
 		// SM or FM: T_low and T_high can be even
 		*baud = *baudlow = b/2;
 	}
