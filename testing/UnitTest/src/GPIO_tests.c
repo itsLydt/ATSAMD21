@@ -119,6 +119,51 @@ void t_randomPinDirections(void){
 	}
 }
 
+void t_randomPinSettings(void){
+	for(int i = 0; i < 1000; i++){
+		uint8_t portNum = rand() % 2;
+		uint32_t mask = rand() & implementedPins[portNum];
+		enum GPIO_PinDirections direction = rand() % 2? GPIO_OUT : GPIO_IN;
+		struct GPIO_PinConfig_t pinSettings;
+		pinSettings.driveStrength = rand() % 2;
+		pinSettings.enablePull = rand() % 2;
+		pinSettings.enableInputBuffer = rand() % 2;
+		pinSettings.enablePMUX = rand() % 2;
+		pinSettings.alt_function = rand() % 9; // TODO: only test valid combinations?
+		
+		PortGroup* port = &PORT->Group[portNum];
+		GPIO_ConfigurePort(port, mask, direction, &pinSettings);
+		
+		switch(direction){
+			case GPIO_OUT:
+			TEST_ASSERT_BITS_HIGH(mask, PORT->Group[portNum].DIR.reg);
+			break;
+			case GPIO_IN:
+			TEST_ASSERT_BITS_LOW(mask, PORT->Group[portNum].DIR.reg);
+			break;
+		}
+		
+		for(int i = 0; i < 32; i++){
+			if((mask >> i) & 0x01){
+				// pin i selected in mask
+				if(pinSettings.driveStrength == GPIO_OUT){
+					TEST_ASSERT_EQUAL_MESSAGE(pinSettings.driveStrength, port->PINCFG[i].bit.DRVSTR, "Drive strength check failed");
+					TEST_ASSERT_EQUAL_MESSAGE(pinSettings.enableInputBuffer, port->PINCFG[i].bit.INEN, "Input buffer enable check failed");
+				}
+				TEST_ASSERT_EQUAL_MESSAGE(pinSettings.enablePull, port->PINCFG[i].bit.PULLEN, "Pull enable check failed");
+				TEST_ASSERT_EQUAL_MESSAGE(pinSettings.enablePMUX, port->PINCFG[i].bit.PMUXEN, "PMUX enable check failed");
+				
+				uint8_t pmuxValue = port->PMUX[i >> 1].reg; // pin / 2
+				uint8_t shift = i % 2? 4 : 0;
+				pmuxValue = (pmuxValue >> shift) && 0xF;
+				snprintf(&msgBuffer, BUFFER_SIZE, "PMUX function check failed on port %d, pin %d", portNum, i);
+				TEST_ASSERT_EQUAL_MESSAGE(pinSettings.alt_function, pmuxValue, &msgBuffer);
+			}
+		}		
+	}
+}
+
+
 void t_resetPort(void){
 	GPIO_ResetPort(GPIOB);
 	uint32_t defaultDir[3] = PORT_DIR_DEFAULT_VAL;

@@ -9,6 +9,7 @@
 #define GPIO_TESTS_H_
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
 #include "unity.h"
@@ -25,6 +26,8 @@ void t_setPortsAsInput(void);
 void t_setPortsAsOutput(void);
 
 void t_randomPinDirections(void);
+
+void t_randomPinSettings(void);
 
 void t_resetPort(void);
 

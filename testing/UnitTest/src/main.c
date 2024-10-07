@@ -34,6 +34,10 @@ void UnityHelperDeadLoop(void)
 
 int main(void)
 {
+	/* seed RNG */
+	time_t t = time(__TIME__);
+	srand(t);
+	
 	/*Configure UART console.*/
 	configure_console();
 	
@@ -41,6 +45,7 @@ int main(void)
 	uart_writestr(STRING_HEADER);
 	uart_writestr("Running GPIO driver tests"STRING_EOL);
 	UNITY_BEGIN();
+	
 	RUN_TEST(t_pinToMask);
 
 	RUN_TEST(t_setPinsAsOutput);
@@ -50,6 +55,7 @@ int main(void)
 	RUN_TEST(t_setPortsAsInput);
 	
 	RUN_TEST(t_randomPinDirections);
+	RUN_TEST(t_randomPinSettings);
 
 	RUN_TEST(t_resetPort);
 	return UNITY_END();
