@@ -127,7 +127,7 @@ void _sercom_get_async_baud_val(
 	 
 	//SERCOM3->USART.CTRLB.bit.CHSIZE = 0; //chars are 8 bits
 	//SERCOM3->USART.CTRLB.bit.SBMODE = 0; // use 1 stop bit
-	SERCOM3->USART.CTRLB.bit.RXEN = 1;
+	//SERCOM3->USART.CTRLB.bit.RXEN = 1;
 	SERCOM3->USART.CTRLB.bit.TXEN = 1;
 	 
 	while(SERCOM3->USART.SYNCBUSY.reg);
