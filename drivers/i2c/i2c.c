@@ -5,6 +5,13 @@
 #define I2C_FAST_MODE_PLUS_FREQ_kHz 1000
 #define I2C_HIGH_SPEED_MODE_FREQ_kHz 4300
 
+enum I2C_HostCommands {
+	NONE,		// no action
+	ACK_REPEAT_START,	// repeat the start command
+	ACK_READ,		// byte read command	
+	ACK_STOP		// issue a stop command
+};
+
 void I2C_ClkControl(uint8_t sercom_num, _Bool en_busClk, int8_t coreClkGenerator, int8_t slowClkGenerator){
 	uint32_t bus_mask = (0x01 << (2 + sercom_num)); // SERCOM0: bit2, SERCOM1: bit3, etc
 	if(en_busClk){
@@ -167,7 +174,7 @@ void I2C_SetEnabled(Sercom* sercom, _Bool setEnabled){
 }
 
 void I2CHost_GenerateStop(Sercom* i2c){
-	i2c->I2CM.CTRLB.bit.CMD = 0x3;
+	i2c->I2CM.CTRLB.bit.CMD = ACK_STOP;
 	// wait for stop condition to occur
 	//while(i2c->I2CM.SYNCBUSY.bit.SYSOP);
 }
