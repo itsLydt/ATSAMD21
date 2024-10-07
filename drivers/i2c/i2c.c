@@ -43,7 +43,7 @@ void I2C_ConfigureClientTimeouts(Sercom* sercom, struct TimeoutConfigClient_t* t
 	sercom->I2CS.CTRLA.bit.SEXTTOEN = timeoutInfo->enableSEXTTOEN;
 }
 
-void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow){
+void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, enum I2C_BusMode bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow){
 	I2C_SetEnabled(sercom, 0);
 	
 	// 1. set the mode
@@ -52,12 +52,12 @@ void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t
 	struct TimeoutConfigHost_t timeoutInfo = { 1, 0, 0, 0}; // enable LOWTOUTEN
 	I2C_ConfigureHostTimeouts(sercom, &timeoutInfo);
 	
-	sercom->I2CM.CTRLA.bit.SCLSM = bus_speed == 2? 1 : stretch_mode; // high-speed mode requires stretch mode 1
+	sercom->I2CM.CTRLA.bit.SCLSM = bus_speed == HIGH_SPEED? 1 : stretch_mode; // high-speed mode requires stretch mode 1
 	sercom->I2CM.CTRLA.bit.SPEED = bus_speed;
 	sercom->I2CM.CTRLA.bit.SDAHOLD = sda_hold;
 	sercom->I2CM.CTRLB.bit.SMEN = enable_sm;
 
-	if(bus_speed < 2){
+	if(bus_speed < HIGH_SPEED){
 		// standard mode, fast mode, or fast mode+
 		sercom->I2CM.BAUD.bit.BAUD = baud;
 		sercom->I2CM.BAUD.bit.BAUDLOW = baudlow;
@@ -75,8 +75,8 @@ void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t
 	while(sercom->I2CM.SYNCBUSY.bit.SYSOP);
 }
 
-void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm){
-	I2C_SetEnabled(sercom, false);
+void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, enum I2C_BusMode bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm){
+	I2C_SetEnabled(sercom, 0);
 	
 	// 1. set the mode
 	sercom->I2CS.CTRLA.bit.MODE = SERCOM_I2CM_CTRLA_MODE_I2C_SLAVE_Val;

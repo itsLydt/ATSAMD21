@@ -48,21 +48,25 @@ struct TimeoutConfigClient_t {
 	uint8_t :3;
 };
 
+enum I2C_BusMode {
+	STANDARD_OR_FAST,	// standard mode or fast mode (up to 100 kHz, up to 400 kHz)
+	FAST_PLUS,			// fast-mode+	(up to 1MHz): note that this mode requires a baud setting such that T_high : T_low = 1:2
+	HIGH_SPEED			// high-speed mode	(up to 3.4MHz) : note that this mode requires a baud setting such that T_high : T_low = 1:2
+};
+
 /*
 stretch_mode:	0 - stretch prior to ACK
 				1 - stretch after ACK - high-speed mode requires this mode
-bus_speed:		0 - standard mode or fast mode (up to 100 kHz, up to 400 kHz)
-				1 - fast-mode+	(up to 1MHz): note that this mode requires a baud setting such that T_high : T_low = 1:2
-				2 - high-speed mode	(up to 3.4MHz) : note that this mode requires a baud setting such that T_high : T_low = 1:2
+
 enable_sm:		enables smart mode, which automatically causes the device to ack/nack according to the setting in CTRLB.ACKACT 
 				whenever the DATA register is read
 baud:			used to time the high period of the serial clock (T_high), or both high and low if baudlow is zero. 
 baudlow:		used to time the low period of the serial clock (T_low). 
 */
-void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow);
+void I2C_InitHost(Sercom* sercom, _Bool stretch_mode, enum I2C_BusMode bus_speed, uint8_t sda_hold, _Bool enable_sm, uint8_t baud, uint8_t baudlow);
 
 
-void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, uint8_t bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm);
+void I2C_InitClient(Sercom* sercom, _Bool stretch_mode, enum I2C_BusMode bus_speed, uint8_t sda_hold, uint8_t addr_mode, _Bool auto_addr_ack, _Bool enable_sm);
 
 /* Calculate the baud settings required to achieve the specified SCL frequency given the serial clock core clock frequency, if possible 
 	gclk_freq: frequency of the serial engine clock generator (GCLK_SERCOMx_CORE), in kHz
