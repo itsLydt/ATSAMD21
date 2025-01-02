@@ -8,6 +8,8 @@
 
 #include "sam.h"
 
+#include "rgb.h"
+
 int main(void)
 {
     /* Replace with your application code */
