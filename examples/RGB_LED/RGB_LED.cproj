@@ -153,6 +153,9 @@
       <SubType>compile</SubType>
       <Link>gpio.h</Link>
     </Compile>
+    <Compile Include="config_led.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Device_Startup\startup_samd21.c">
       <SubType>compile</SubType>
     </Compile>
