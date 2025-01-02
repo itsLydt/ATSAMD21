@@ -9,6 +9,8 @@
 #ifndef RGB_H_
 #define RGB_H_
 
+#include "gpio.h"
+
 extern PortGroup* const LED_PORT;
 extern const uint8_t LED_RED;
 extern const uint8_t LED_GREEN;

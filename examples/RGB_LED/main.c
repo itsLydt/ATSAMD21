@@ -8,11 +8,13 @@
 
 #include "sam.h"
 
+#include "config_led.h"
 #include "rgb.h"
 
 int main(void)
 {
-    /* Replace with your application code */
+    LED_Init();
+	
     while (1) 
     {
     }
