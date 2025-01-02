@@ -9,6 +9,11 @@
 #ifndef RGB_H_
 #define RGB_H_
 
+extern PortGroup* const LED_PORT;
+extern const uint8_t LED_RED;
+extern const uint8_t LED_GREEN;
+extern const uint8_t LED_BLUE;
+
 struct LEDColor_t {
 	uint8_t r	:1;
 	uint8_t g	:1;
