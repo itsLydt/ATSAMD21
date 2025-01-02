@@ -23,5 +23,8 @@ void LED_Init(){
 }
 
 void LED_SetColor(struct LEDColor_t color){
-
+	// assumption: LEDs are connected such that setting the output to low turns the LED on
+	GPIO_WritePin(LED_PORT, LED_RED, color.r? 0 : 1);
+	GPIO_WritePin(LED_PORT, LED_GREEN, color.g? 0 : 1);
+	GPIO_WritePin(LED_PORT, LED_BLUE, color.b? 0 : 1);
 }

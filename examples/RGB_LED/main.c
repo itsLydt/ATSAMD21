@@ -13,9 +13,18 @@
 
 int main(void)
 {
+	int counter = 100000;
     LED_Init();
 	
     while (1) 
     {
+		for(int i = 0; i < counter; ++i);
+		LED_SetColor(RED);
+		
+		for(int i = 0; i < counter; ++i);
+		LED_SetColor(GREEN);
+		
+		for(int i = 0; i < counter; ++i);
+		LED_SetColor(BLUE);
     }
 }
