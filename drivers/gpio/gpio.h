@@ -98,7 +98,8 @@ void GPIO_WritePort(PortGroup* port, uint32_t pins, _Bool value);
 void GPIO_TogglePin(PortGroup* port, uint8_t pin);
 /* Toggle the state of multiple pins */
 void GPIO_TogglePort(PortGroup* port, uint32_t pins);
-
+/* Write value to multiple pins */
+void GPIO_WriteValue(PortGroup* port, uint32_t pins, uint32_t value);
 
 /*******************
 Getting interrupts from changes in pin values

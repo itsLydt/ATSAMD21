@@ -166,6 +166,12 @@ void GPIO_TogglePort(PortGroup* port, uint32_t pinMask){
 	port->OUTTGL.reg = PORT_OUTTGL_OUTTGL(pinMask); // toggle all indicated pins
 }	
 
+/* Write values to multiple pins */
+void GPIO_Write(PortGroup* port, uint32_t pin_mask, uint32_t values){
+	GPIO_WritePort(port, pin_mask, 0);			// clear indicated pins
+	GPIO_WritePort(port, pin_mask & values, 1);	// write pins high
+}
+
 void GPIO_EnableExtInt(uint8_t extint_num){
 	EIC->INTENSET.reg = EIC_INTENSET_EXTINT(1 << extint_num);;
 }
