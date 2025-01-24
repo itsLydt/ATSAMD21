@@ -167,7 +167,7 @@ void GPIO_TogglePort(PortGroup* port, uint32_t pinMask){
 }	
 
 /* Write values to multiple pins */
-void GPIO_Write(PortGroup* port, uint32_t pin_mask, uint32_t values){
+void GPIO_WriteValue(PortGroup* port, uint32_t pin_mask, uint32_t values){
 	GPIO_WritePort(port, pin_mask, 0);			// clear indicated pins
 	GPIO_WritePort(port, pin_mask & values, 1);	// write pins high
 }
